@@ -1,19 +1,20 @@
 Geoinformatik 2 – Web-GIS
-# Übung 2 · Statische, interaktive Webkarte mit Folium & Python
+# Übung 1 · Statische Webseite mit Copilot in VS Code
 Prof. Dr. Yu Feng
 
 ## Lernziele
 Nach dieser Übung können Sie:
-- mit **Folium** (Leaflet in Python) eine interaktive Karte erzeugen,
-- **Punkte**, **Linien** und **Flächen (GeoJSON/Polygon)** visualisieren,
-- Popups/Tooltips und LayerControl nutzen,
-- die HTML-Daten `*.html` herunterladen.
+- mit Copilot ein statisches HTML-Dokument erzeugen und anpassen;
+- Grundbausteine einer Webseite einsetzen: Text, Überschriften, Tabelle, Bild, Links;
+- eine 1×3-Galerie bauen, deren Kacheln auf externe Links führen;
+- eine Seite responsiv, zugänglich (alt-Texte) und leichtgewichtig gestalten;
+- die Seite ohne Kommandozeile auf Netlify deployen.
 
 ## Überblick
-- https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/Uebung2_Folium_Student.ipynb
+- 
 
 ## Materialen zu bearbeiten
-- Colab Notebook https://drive.google.com/file/d/1Tt8KefdDQxWbimkvMBNkVWvVIC6xYv4D/view?usp=sharing
+
 
 ## Erwartete Karten
 

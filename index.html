@@ -71,17 +71,24 @@
     <header>
         <h1>About Me</h1>
     </header>
+    <div class="container" style="display: flex;">
+        <div>
+            <h2>Hi, I'm Yu Feng!</h2>
+            <p>
+                Welcome to my personal page! I am passionate about WebGIS and teaching. 
+                You can find more about me and my projects on my GitHub page: 
+                <a href="https://yuzzfeng.github.io/" target="_blank">yuzzfeng.github.io</a>.
+            </p>
+            <p>
+                Currently, I am at the University of Applied Sciences Mainz, where I am involved in exciting projects 
+                related to geospatial technologies and education.
+            </p>
+        </div>
+        <p style="display: flex; justify-content: flex-end; align-items: center;"> 
+            <img src="https://raw.githubusercontent.com/yuzzfeng/hugo-theme-console/refs/heads/master/images/ikg_homepage_feng.jpg" style="max-width: 80%; height: auto;">
+        </p>
+    </div>
     <div class="container">
-        <h2>Hi, I'm Yufeng!</h2>
-        <p>
-            Welcome to my personal page! I am passionate about WebGIS and teaching. 
-            You can find more about me and my projects on my GitHub page: 
-            <a href="https://yuzzfeng.github.io/" target="_blank">yuzzfeng.github.io</a>.
-        </p>
-        <p>
-            Currently, I am at the University of Applied Sciences Mainz, where I am involved in exciting projects 
-            related to geospatial technologies and education.
-        </p>
         <h3>My CV</h3>
         <table>
             <thead>
@@ -110,18 +117,15 @@
             </tbody>
         </table>
         <h3>My Work</h3>
-        <div class="gallery">
-            <div class="gallery-item">
-                <iframe src="https://subtle-tulumba-d7b8e7.netlify.app/"></iframe>
-                <a href="https://subtle-tulumba-d7b8e7.netlify.app/" target="_blank">View Work 1</a>
+        <div class="gallery" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+            <div class="gallery-item" style="flex: 1 1 calc(33.333% - 1rem);">
+                <iframe src="Uebung1/assets/map.html"></iframe>
             </div>
-            <div class="gallery-item">
-                <iframe src="https://subtle-tulumba-d7b8e7.netlify.app/"></iframe>
-                <a href="https://subtle-tulumba-d7b8e7.netlify.app/" target="_blank">View Work 2</a>
+            <div class="gallery-item" style="flex: 1 1 calc(33.333% - 1rem);">
+                <iframe src="Uebung1/assets/map.html"></iframe>
             </div>
-            <div class="gallery-item">
-                <iframe src="https://subtle-tulumba-d7b8e7.netlify.app/"></iframe>
-                <a href="https://subtle-tulumba-d7b8e7.netlify.app/" target="_blank">View Work 3</a>
+            <div class="gallery-item" style="flex: 1 1 calc(33.333% - 1rem);">
+                <iframe src="Uebung1/assets/map.html"></iframe>
             </div>
         </div>
     </div>
