@@ -11,40 +11,39 @@ Nach dieser Übung können Sie:
 - die Seite ohne Kommandozeile auf Netlify deployen.
 
 ## Überblick
-- 
-
-## Materialen zu bearbeiten
+- https://subtle-tulumba-d7b8e7.netlify.app/
 
 
-## Erwartete Karten
+## Aufgaben
+Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nötig), die **mindestens** Folgendes enthält:
 
-<table>
-  <tr>
-    <td>
-      <a target="_blank" rel="noopener" href="https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/maps/map_1_basiskarte.html">
-        <img src="https://raw.githubusercontent.com/yuzzfeng/Geoinformatik2_HS_Mainz/main/Uebung2/previews/map_1.png" alt="Basiskarte" width="100%">
-      </a>
-      <p align="center"><em>1) Basiskarte</em></p>
-    </td>
-    <td>
-      <a target="_blank" rel="noopener" href="https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/maps/map_2_punkte.html">
-        <img src="https://raw.githubusercontent.com/yuzzfeng/Geoinformatik2_HS_Mainz/main/Uebung2/previews/map_2.png" alt="Punkte (Marker)" width="100%">
-      </a>
-      <p align="center"><em>2) Punkte (Marker)</em></p>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <a target="_blank" rel="noopener" href="https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/maps/map_3_reiseroute.html">
-        <img src="https://raw.githubusercontent.com/yuzzfeng/Geoinformatik2_HS_Mainz/main/Uebung2/previews/map_3.png" alt="Reiseroute (Polyline)" width="100%">
-      </a>
-      <p align="center"><em>3) Reiseroute (Polyline)</em></p>
-    </td>
-    <td>
-      <a target="_blank" rel="noopener" href="https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/maps/map_4_flaechen_online.html">
-        <img src="https://raw.githubusercontent.com/yuzzfeng/Geoinformatik2_HS_Mainz/main/Uebung2/previews/map_4.png" alt="Flächen (GeoJSON)" width="100%">
-      </a>
-      <p align="center"><em>4) Flächen (GeoJSON)</em></p>
-    </td>
-  </tr>
-</table>
+1. **Intro**: `<h1>` + 1–2 Absätze über dich.  
+2. **Kurz-CV als Tabelle**: 2–4 Spalten, 4–8 Zeilen (Jahr · Station · Ort · Stichwort).  
+3. **Ein Foto**: z. B. `assets/me.jpg`, mit sinnvollem `alt` und kurzer Bildunterschrift.  
+4. **Galerie 1×3**: drei Karten/Teaser (Bild + Titel + Kurztext), **Klick → externer Link** (z. B. GitHub, Portfolio, Fotoblog).  
+5. **Grund-CSS**: gut lesbar, mobilfreundlich (≤ 720 px → 1-spaltig).  
+6. **Zugänglichkeit**: alt-Texte, klare Linktexte/`aria-label`, ausreichender Farbkontrast.  
+7. **Deployment**: Upload zu **Netlify** und Freigabe des Live-Links.
+
+## Empfohlene Copilot-Prompts
+
+**Prompt 1 – Grundgerüst + Inhalte**  
+> *„Erzeuge eine minimalistische persönliche Startseite als **einzelne `index.html`** (ohne Frameworks). Inhalte: (1) Titel + 1–2 Absätze; (2) **Tabelle** mit 6 Stationen (Jahr, Station, Ort, Stichwort); (3) **Bild** `assets/me.jpg`; (4) **Galerie 1×3** mit drei Karten (Bild, Titel, Kurztext), die **auf externe Links** führen. Anforderungen: semantisches HTML5 (`header`, `main`, `section`, `figure`, `table`), responsives **CSS** (max-width, Grid/Flex), guter Farbkontrast, System-Schriftarten. Alles in **einer Datei** liefern (inkl. `<style>`).“*
+
+**Prompt 2 – Look & Feel verfeinern**  
+> *„Passe Farben an (Akzent #2563eb), erhöhe Zeilenhöhe/Abstände, füge Karten-Schatten & abgerundete Ecken hinzu, mache die Tabelle mit Hover-Zeilen, und stelle sicher: ≤ 720 px → Galerie 1-spaltig.“*
+
+**Prompt 3 – Galerie-Links ersetzen**  
+> *„Ersetze die drei Galerie-Karten durch: GitHub (Link …), Portfolio (Link …), Fotoblog (Link …). Verwende Platzhalterbilder `https://picsum.photos/600/400?random=1..3`, ergänze `aria-label` je Link.“*
+
+**Prompt 4 – A11y-Check**  
+> *„Prüfe Überschriften-Hierarchie, `alt`-Texte, sichtbaren Fokus, Farbkontrast ≥ 4.5:1, und nimm Korrekturen im CSS vor.“*
+
+---
+
+
+## Erwartete Webseite
+
+<p align="center">
+  <img src="assets/Uebung1_output.png" alt="Übung 1 Output" width="100%">
+</p>
