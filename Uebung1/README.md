@@ -36,8 +36,6 @@ Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nö
 **Prompt 3 – Galerie-Links ersetzen**  
 > *„Ersetze die drei Galerie-Karten durch: GitHub (Link …), Portfolio (Link …), Fotoblog (Link …). Verwende Platzhalterbilder `https://picsum.photos/600/400?random=1..3`, ergänze `aria-label` je Link.“*
 
-**Prompt 4 – A11y-Check**  
-> *„Prüfe Überschriften-Hierarchie, `alt`-Texte, sichtbaren Fokus, Farbkontrast ≥ 4.5:1, und nimm Korrekturen im CSS vor.“*
 
 ---
 
