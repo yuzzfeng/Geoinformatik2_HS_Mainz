@@ -50,13 +50,7 @@ Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nö
 **Prompt 3 – Galerie-Links ersetzen**  
 > *„Ersetze die drei Galerie-Karten durch: GitHub (Link …), Portfolio (Link …), Fotoblog (Link …). Verwende Platzhalterbilder `https://picsum.photos/600/400?random=1..3`, ergänze `aria-label` je Link.“*
 
----
 
-### Erwartete Webseite
-
-<p align="center">
-  <img src="assets/Uebung1_output.png" alt="Übung 1 Output" width="100%">
-</p>
 
 ## III. Deployment: Veröffentlichen der Seite
 
@@ -66,14 +60,18 @@ Für das Deployment stehen zwei mögliche Varianten zur Auswahl – du kannst se
 1. Lade dein Projekt in ein GitHub-Repository hoch.  
 2. Gehe in deinem Repository auf **Settings → Pages**.  
 3. Wähle den Branch `main` (oder `gh-pages`) und speichere die Einstellungen.  
-4. Nach wenigen Minuten ist deine Seite unter  
+4. Nach wenigen Minuten ist deine Seite wie https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung1/ erreichbar.  
 
+### Option B: GitHub-Repository mit Netlify verbinden
+1. Erstelle ein Konto bei [Netlify](https://www.netlify.com) (Login mit GitHub möglich).  
+2. Klicke auf **Add new site → Import an existing project**.  
+3. Wähle dein GitHub-Repository aus und bestätige.  
+4. Netlify baut deine Seite automatisch und stellt sie unter einer Adresse wie https://subtle-tulumba-d7b8e7.netlify.app/
 
+---
 
+### Erwartete Webseite
 
-
-
-
-## Überblick
-- https://subtle-tulumba-d7b8e7.netlify.app/
-
+<p align="center">
+  <img src="assets/Uebung1_output.png" alt="Übung 1 Output" width="100%">
+</p>
