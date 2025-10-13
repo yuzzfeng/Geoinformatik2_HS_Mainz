@@ -71,7 +71,7 @@ Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nö
 
 ## III. Deployment: Veröffentlichen der Seite
 
-## Zwischenschritt: Commit & Push mit VS Code
+### Zwischenschritt: Commit & Push mit VS Code
 
 1. Öffne in VS Code den **Source Control** Tab (links, Symbol mit drei Punkten und Strichen).  
 2. Dort siehst du alle geänderten Dateien (`index.html`, `styles.css`, `assets/me.jpg`).  
@@ -79,7 +79,7 @@ Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nö
 4. Klicke auf den Haken (✔️) → **Commit**.  
 5. Danach auf **Push** (oben in der Leiste oder über „…“ → „Push“).  
 
-## Typisches Problem: Git fragt nach Username und Email
+### Typisches Problem: Git fragt nach Username und Email
 
 Oft erscheint beim ersten Commit/Push eine Meldung. Lösung im Terminal (über die Oberfläche öffnen):
 
