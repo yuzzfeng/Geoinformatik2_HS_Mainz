@@ -7,8 +7,7 @@ Nach dieser Übung können Sie:
 - mit Copilot ein statisches HTML-Dokument erzeugen und anpassen;
 - Grundbausteine einer Webseite einsetzen: Text, Überschriften, Tabelle, Bild, Links;
 - eine 1×3-Galerie bauen, deren Kacheln auf externe Links führen;
-- eine Seite responsiv, zugänglich (alt-Texte) und leichtgewichtig gestalten;
-- die Seite ohne Kommandozeile auf Netlify deployen.
+- die Seite ohne Kommandozeile auf Netlify/Github Pages deployen.
 
 ## I. Vorbereitungen der Umgebung
 
@@ -28,7 +27,26 @@ Nach dieser Übung können Sie:
 - In der Statusleiste erscheint ein Copilot-Symbol, das den aktiven Status anzeigt.  
 - Beim Schreiben in `index.html` oder `styles.css` schlägt Copilot in grauer Schrift Code vor → mit **Tab** bestätigen, um ihn zu übernehmen.  
 
+### 4) GitHub Repository anlegen (für spätere Veröffentlichung)
+- Gehe zu [https://github.com/new](https://github.com/new) und lege ein neues Repository an.  
+- Falls du eine **persönliche Webseite** mit Github erstellen willst, muss der Repository-Name exakt so lauten:  
+your-username.github.io
+(ersetze `your-username` durch deinen GitHub-Benutzernamen).  
+- Setze den Haken bei **„Initialize this repository with a README“**, damit das Repo gleich eine Startdatei hat.  
+- Klicke auf **Create repository**.  
+
 ## II. Projektstruktur & Start
+
+Klone zuerst dein Repository lokal in VS Code (ohne Kommandozeile):  
+
+1. Öffne **VS Code**.  
+2. Im Startmenü klicke auf **„Clone Git Repository…“**.  
+3. Gib die URL deines Repos ein, z. B.  
+    ```
+    https://github.com/your-username/repository-name.git
+    ```
+4. Wähle einen lokalen Ordner als Speicherort.  
+5. Nach dem Klonen fragt VS Code, ob du das Projekt öffnen möchtest → **„Open“** wählen.  
 
 Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nötig), die **mindestens** Folgendes enthält:
 
