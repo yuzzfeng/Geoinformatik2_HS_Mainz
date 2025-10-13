@@ -69,8 +69,30 @@ Erstelle eine persönliche Startseite `index.html` (ohne Frameworks, kein JS nö
 > *„Ersetze die drei Galerie-Karten durch: GitHub (Link …), Portfolio (Link …), Fotoblog (Link …). Verwende Platzhalterbilder `https://picsum.photos/600/400?random=1..3`, ergänze `aria-label` je Link.“*
 
 
-
 ## III. Deployment: Veröffentlichen der Seite
+
+## Zwischenschritt: Commit & Push mit VS Code
+
+1. Öffne in VS Code den **Source Control** Tab (links, Symbol mit drei Punkten und Strichen).  
+2. Dort siehst du alle geänderten Dateien (`index.html`, `styles.css`, `assets/me.jpg`).  
+3. Gib oben eine **Commit-Nachricht** ein, z. B. `first commit`.  
+4. Klicke auf den Haken (✔️) → **Commit**.  
+5. Danach auf **Push** (oben in der Leiste oder über „…“ → „Push“).  
+
+## Typisches Problem: Git fragt nach Username und Email
+
+Oft erscheint beim ersten Commit/Push eine Meldung. Lösung im Terminal (über die Oberfläche öffnen):
+
+1. In VS Code oben im Menü auf **Ansicht (View)** klicken.  
+2. Dort **Terminal** auswählen. → Unten im Fenster öffnet sich das integrierte Terminal.  
+3. Gib folgende Befehle ein (mit deinen eigenen Daten):  
+
+  ```bash
+  git config --global user.name "Dein Name"
+  git config --global user.email "dein.email@example.com"
+  ```
+
+Danach funktioniert Commit & Push ohne weitere Nachfragen.
 
 Für das Deployment stehen zwei mögliche Varianten zur Auswahl – du kannst selbst entscheiden:
 
