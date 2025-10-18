@@ -64,10 +64,12 @@ Zum Abschluss reflektieren Sie den Aufbau deines Codes anhand einiger Fragen.
 - **Klick-Ereignisse**: Wie wird das Klick-Ereignis mit JavaScript verarbeitet?  
 - **Tabs**: Durch welches Element werden die Inhalte der Tabs dargestellt?  
 - **News**: Wie wird das Einlesen der externen News-Datei realisiert?  
- 
-### Live-URL
+
+---
+
+## Live-URL
 Bitte hier die öffentlich erreichbare URL eintragen (GitHub Pages oder Netlify):  
-`https://…`
+OLAT -> Geoinformatik 2 WiSe 2025/2026 -> Übungsabgabe -> Uebung 1-3 - Link
 
 ---
 
