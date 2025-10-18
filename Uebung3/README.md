@@ -1,5 +1,5 @@
 Geoinformatik 2 – Web-GIS
-# Übung 2 · Statische, interaktive Webkarte mit Folium & Python
+# Übung 3 · Interaktive Webkarte mit Folium & Python, Cesium
 Prof. Dr. Yu Feng
 
 ## Lernziele
