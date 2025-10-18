@@ -6,3 +6,5 @@ Dies ist das Repository für die Lehrveranstaltung **Geoinformatik2** an der Hoc
 - Übung 1: https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung1/  
 
 - Übung 2: https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung2/  
+
+- Übung 3: https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung3/ 
