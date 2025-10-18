@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+    /* Color palette: muted green accent, separate light and dark themes */
+        :root{
+            --bg: #fafbfd;            /* 浅背景，略带冷色调 */
+            --text: #17202a;          /* 深灰蓝色，易读 */
+            --muted: #57606a;         /* 次要文本 */
+            --card: #ffffff;          /* 卡片白 */
+            --header-bg: linear-gradient(90deg,#2e7d60,#4aa07a); /* 渐变主色 */
+            --accent: #2e7d60;       /* 主色 */
+            --link: #1f6feb;         /* 链接蓝色 */
+            --border: rgba(20,34,45,0.06);
+        }
+        .dark-theme{
+            --bg: #0b1220;
+            --text: #e6eef6;
+            --muted: #a9b7c2;
+            --card: #0f1724;
+            --header-bg: linear-gradient(90deg,#1f4f3f,#2e7d60);
+            --accent: #3fa07a;
+            --link: #7fb5ff;
+            --border: rgba(255,255,255,0.04);
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+        }
+        header {
+            background: linear-gradient(90deg, #2e7d60 0%, #4aa07a 100%);
+            color: #fff;
+            padding: 0;
+            position: relative;
+            box-shadow: 0 2px 12px rgba(30,50,60,0.04);
+        }
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0.7rem 2rem 0.7rem 2rem;
+        }
+        .header-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(30,50,60,0.08);
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            height: 3.2rem;
+        }
+        .tab-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            position: relative;
+            height: 100%;
+        }
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.8rem;
+            height: 2.8rem;
+            border-radius: 0.8rem;
+            background: rgba(255,255,255,0.07);
+            border: 1.5px solid rgba(255,255,255,0.13);
+            font-size: 1.5rem;
+            color: #ffe066;
+            margin-left: 0.7rem;
+            transition: background 0.18s, border 0.18s;
+            box-sizing: border-box;
+        }
+        .theme-toggle:focus {
+            outline: 2px solid #ffe066;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.22);
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1.2rem 0.5rem 1.2rem;
+            border-radius: 1.5rem 1.5rem 0 0;
+            color: #fff !important;
+            font-weight: 600;
+            font-size: 1.08rem;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.18s, color 0.18s;
+        }
+        .tab-btn[aria-selected="true"], .tab-btn.active {
+            background: transparent;
+            color: #fff !important;
+        }
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.13);
+            color: #fff !important;
+        }
+        .dark-theme .tab-btn[aria-selected="true"], .dark-theme .tab-btn.active {
+            background: rgba(255,255,255,0.13);
+            color: #fff !important;
+        }
+        .tab-indicator {
+            position: absolute;
+            left: 0; bottom: 0;
+            height: 3px;
+            background: #fff;
+            border-radius: 2px 2px 0 0;
+            transition: all 0.28s cubic-bezier(.4,1.4,.6,1);
+            z-index: 2;
+        }
+        /* 响应式优化新闻卡片图片 */
+        @media (max-width: 900px) {
+            #tab-news img[alt] {
+                width: 98vw !important;
+                height: 200px !important;
+                max-width: 100vw !important;
+            }
+        }
+        .theme-toggle {
+            background: rgba(255,255,255,0.13);
+            border: none;
+            color: #fff;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(30,50,60,0.08);
+            transition: background 0.18s;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.22);
+        }
+        .dark-theme .tab-btn, .dark-theme .tab-btn[aria-selected="true"], .dark-theme .tab-btn.active {
+            color: #fff;
+        }
+        .dark-theme .tab-indicator {
+            background: #fff;
+        }
+        @media (max-width: 700px) {
+            .header-inner { flex-direction: row; align-items: center; padding: 0.7rem 1rem; }
+            .header-controls { margin-top: 0; }
+        }
+        .container {
+            padding: 1rem;
+        }
+        /* Refined CV table: subtle, rounded, muted */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+            background: transparent;
+            color: var(--text);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(20,30,40,0.02); /* 极弱化阴影 */
+        }
+        thead th{
+            background: transparent;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.92rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.9rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody td{
+            padding: 0.85rem 1rem;
+            color: var(--muted);
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            background: rgba(255,255,255,0.0);
+        }
+        tbody tr:nth-child(even){
+            background: rgba(30,50,60,0.01); /* 透明度再减半，极低对比 */
+        }
+        tbody tr:last-child td{border-bottom:none}
+        /* Dark theme adjustments (weakened contrast) */
+        .dark-theme table{box-shadow:none}
+        .dark-theme thead th{color:var(--muted)}
+        .dark-theme tbody td{border-bottom:1px solid rgba(255,255,255,0.03)}
+        .dark-theme tbody tr:nth-child(even){background: rgba(255,255,255,0.02)}
+        .gallery {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        .gallery-item {
+            width: 32%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .gallery-item iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+        }
+        .gallery-item a {
+            display: block;
+            padding: 0.5rem;
+            text-decoration: none;
+            color: #0078d7;
+            font-weight: bold;
+        }
+        .gallery-item a:hover {
+            text-decoration: underline;
+        }
+    /* theme toggle button */
+        .theme-toggle{
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;align-items:center;justify-content:center;
+            box-shadow: 0 6px 18px rgba(30,50,60,0.06);
+        }
+        .theme-toggle::after{ content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(0,0,0,0.12)}
+        .dark-theme .theme-toggle{ background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); color:var(--text); }
+        /* soften table borders in dark theme */
+        .dark-theme table, .dark-theme th, .dark-theme td{ border-color: rgba(255,255,255,0.06) }
+        /* header 中的 tab 样式 */
+        .tab-buttons{display:inline-flex;gap:0.4rem}
+        .tab-btn{background:transparent;border:none;padding:8px 12px;border-radius:8px;color:var(--text);cursor:pointer;font-weight:600}
+        .tab-btn[aria-selected="true"], .tab-btn.active{background:rgba(255,255,255,0.06);box-shadow:0 6px 18px rgba(20,30,40,0.06)}
+        .dark-theme .tab-btn[aria-selected="true"], .dark-theme .tab-btn.active{background:rgba(255,255,255,0.06)}
+        /* ensure tabs use light text in dark mode */
+        .dark-theme .tab-btn{ color: var(--text); }
+        @media (max-width:640px){
+            .header-controls{flex-wrap:wrap;gap:0.4rem}
+            .tab-buttons{order:1}
+            .theme-toggle{order:2}
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1 class="header-title">Yu Feng</h1>
+            <div class="header-controls">
+                <div class="tab-buttons" role="tablist" aria-label="Sections">
+                    <button class="tab-btn" data-tab="about" role="tab" aria-selected="true">About</button>
+                    <button class="tab-btn" data-tab="news" role="tab" aria-selected="false">News</button>
+                    <button class="tab-btn" data-tab="projects" role="tab" aria-selected="false">Projects</button>
+                    <div class="tab-indicator" id="tab-indicator" style="width:0"></div>
+                </div>
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle night mode">🌙</button>
+            </div>
+        </div>
+    </header>
+    <!-- Tabs navigation (content only) -->
+    <div class="container">
+        <div class="tabs">
+            <div class="tab-content">
+                <div id="tab-about" class="tab-pane" role="tabpanel">
+                    <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:280px;">
+                            <p>
+                                Welcome to my personal page! I am passionate about WebGIS and teaching.
+                            </p>
+                            <p>
+                                Currently, I am at the University of Applied Sciences Mainz, where I am involved in projects 
+                                related to geospatial technologies and education.
+                            </p>
+                        </div>
+                        <div style="width:320px;flex-shrink:0;text-align:center;">
+                            <img src="https://raw.githubusercontent.com/yuzzfeng/hugo-theme-console/refs/heads/master/images/ikg_homepage_feng.jpg" alt="头像" style="width:280px;max-width:100%;height:auto;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top:1rem">My experience</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Position</th>
+                                <th>Institution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2023 - Present</td>
+                                <td>Lecturer</td>
+                                <td>University of Applied Sciences Mainz</td>
+                            </tr>
+                            <tr>
+                                <td>2020 - 2023</td>
+                                <td>Researcher</td>
+                                <td>XYZ Institute</td>
+                            </tr>
+                            <tr>
+                                <td>2018 - 2020</td>
+                                <td>GIS Analyst</td>
+                                <td>ABC Company</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="tab-news" class="tab-pane" role="tabpanel" hidden>
+                    <h2>News</h2>
+                    <p>Recent updates, course news and announcements.</p>
+                    <div id="news-list">Loading news...</div>
+                </div>
+
+                <div id="tab-projects" class="tab-pane" role="tabpanel" hidden>
+                    <h2>Projects & Examples</h2>
+                    <div class="projects-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin-top:1rem;max-width:1200px;margin-left:auto;margin-right:auto;">
+                        <div class="project-card" style="background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(20,30,40,0.06);border:1px solid var(--border);">
+                            <div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);font-weight:700;color:var(--text);">Map 1 — Punktemap</div>
+                            <iframe src="assets/map_2_punkte.html" style="width:100%;height:300px;border:none;display:block;"></iframe>
+                            <div style="padding:0.8rem;color:var(--muted);font-size:0.98rem;">Map1 zeigt punktbasierte Daten (Beispiele: Messstellen, POIs). Interaktiv zoombar.</div>
+                        </div>
+
+                        <div class="project-card" style="background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(20,30,40,0.06);border:1px solid var(--border);">
+                            <div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);font-weight:700;color:var(--text);">Map 2 — Reiseroute</div>
+                            <iframe src="assets/map_3_reiseroute.html" style="width:100%;height:300px;border:none;display:block;"></iframe>
+                            <div style="padding:0.8rem;color:var(--muted);font-size:0.98rem;">Map2 visualisiert eine Reiseroute / Track mit Zeitstempel und Popups zur Interpretation.</div>
+                        </div>
+
+                        <div class="project-card" style="background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(20,30,40,0.06);border:1px solid var(--border);">
+                            <div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);font-weight:700;color:var(--text);">Map 3 — Flächen (HS Mainz)</div>
+                            <iframe src="assets/map_4_flaechen_online.html" style="width:100%;height:300px;border:none;display:block;"></iframe>
+                            <div style="padding:0.8rem;color:var(--muted);font-size:0.98rem;">Map3 zeigt Flächen und Thematisierungen — hier zu Hochschule Mainz (Campus-Flächen & Gebäude).</div>
+                        </div>
+
+                        <div class="project-card" style="background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(20,30,40,0.06);border:1px solid var(--border);">
+                            <div style="padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);font-weight:700;color:var(--text);">Map 4 — 3D Ansicht</div>
+                            <iframe src="assets/map_5_3d.html" style="width:100%;height:300px;border:none;display:block;"></iframe>
+                            <div style="padding:0.8rem;color:var(--muted);font-size:0.98rem;">Map4 stellt 3D-Gebäude (LoD2) dar — interaktive Ansicht mit Höhen- und Dachdarstellung.</div>
+                        </div>
+                    </div>
+                    <style>
+                        @media (max-width:900px){
+                            .projects-grid{grid-template-columns:1fr !important}
+                            .project-card iframe{height:220px !important}
+                        }
+                    </style>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<div class="social-links" style="position:fixed;right:1.2rem;bottom:1.2rem;display:flex;flex-direction:column;gap:0.6rem;z-index:999">
+    <a href="https://github.com/yuzzfeng" target="_blank" aria-label="GitHub">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="border-radius:10px;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,0.06);padding:6px;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.648.5.5 5.648.5 12c0 5.086 3.292 9.392 7.865 10.915.575.106.785-.25.785-.555 0-.274-.01-1-.015-1.964-3.2.696-3.875-1.542-3.875-1.542-.522-1.327-1.275-1.68-1.275-1.68-1.043-.713.08-.699.08-.699 1.153.082 1.76 1.185 1.76 1.185 1.025 1.756 2.691 1.25 3.345.957.105-.744.402-1.25.731-1.537-2.556-.29-5.244-1.278-5.244-5.686 0-1.256.448-2.282 1.183-3.087-.118-.289-.513-1.453.112-3.028 0 0 .965-.309 3.162 1.181a11.03 11.03 0 012.878-.388c.976.004 1.96.132 2.878.388 2.196-1.49 3.16-1.181 3.16-1.181.627 1.575.232 2.739.114 3.028.737.805 1.182 1.831 1.182 3.087 0 4.418-2.692 5.392-5.256 5.675.413.355.783 1.055.783 2.127 0 1.535-.014 2.774-.014 3.15 0 .31.208.667.792.553C20.706 21.39 24 17.084 24 12c0-6.352-5.148-11.5-12-11.5z" fill="currentColor"/></svg>
+    </a>
+    <a href="https://www.linkedin.com/in/yu-feng-7a083580/" target="_blank" aria-label="LinkedIn">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="border-radius:10px;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,0.06);padding:6px;" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.024-3.037-1.852-3.037-1.853 0-2.135 1.445-2.135 2.938v5.668H9.353V9h3.412v1.561h.049c.476-.9 1.637-1.85 3.369-1.85 3.602 0 4.268 2.37 4.268 5.455v6.286zM5.337 7.433a2.062 2.062 0 110-4.124 2.062 2.062 0 010 4.124zM6.963 20.452H3.712V9h3.251v11.452z" fill="currentColor"/></svg>
+    </a>
+</div>
+<script>
+    (function(){
+        const darkClass = 'dark-theme';
+        const toggle = document.getElementById('theme-toggle');
+        function setIcon(isDark){ toggle.textContent = isDark ? '☀️' : '🌙'; }
+        function applyTheme(mode){
+            if(mode === 'dark') document.documentElement.classList.add(darkClass);
+            else document.documentElement.classList.remove(darkClass);
+            setIcon(mode === 'dark');
+        }
+        const saved = localStorage.getItem('uebung2-theme');
+        if(saved) applyTheme(saved);
+        else {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+        toggle.addEventListener('click', function(){
+            const isDark = document.documentElement.classList.toggle(darkClass);
+            localStorage.setItem('uebung2-theme', isDark ? 'dark' : 'light');
+            setIcon(isDark);
+        });
+    })();
+</script>
+<script>
+        (function(){
+            // Tab switching logic with animated indicator
+            const buttons = Array.from(document.querySelectorAll('.tab-btn'));
+            const panes = document.querySelectorAll('.tab-pane');
+            const indicator = document.getElementById('tab-indicator');
+            function moveIndicator(tabIdx) {
+                if (!indicator || !buttons[tabIdx]) return;
+                const btn = buttons[tabIdx];
+                const rect = btn.getBoundingClientRect();
+                const parentRect = btn.parentElement.getBoundingClientRect();
+                indicator.style.width = rect.width + 'px';
+                indicator.style.left = (rect.left - parentRect.left) + 'px';
+            }
+            function activate(tab) {
+                let idx = 0;
+                buttons.forEach((b,i)=>{
+                    const is = b.dataset.tab === tab;
+                    b.setAttribute('aria-selected', is ? 'true' : 'false');
+                    b.classList.toggle('active', is);
+                    if(is) idx = i;
+                });
+                panes.forEach(p=> p.hidden = p.id !== ('tab-'+tab));
+                localStorage.setItem('uebung2-active-tab', tab);
+                moveIndicator(idx);
+            }
+            buttons.forEach((b,i)=> b.addEventListener('click', ()=> activate(b.dataset.tab)));
+            // init: try saved tab
+            const saved = localStorage.getItem('uebung2-active-tab') || 'about';
+            activate(saved);
+            // On resize, keep indicator in sync
+            window.addEventListener('resize', ()=>{
+                const tab = buttons.find(b=>b.classList.contains('active'));
+                if(tab) moveIndicator(buttons.indexOf(tab));
+            });
+        })();
+</script>
+<script>
+    (function(){
+        // Fetch and render news.json (latest 5)
+        async function loadNews() {
+            const container = document.getElementById('news-list');
+            try {
+                const res = await fetch('assets/news.json');
+                if (!res.ok) throw new Error('Failed to load news');
+                const data = await res.json();
+                const list = data.slice(0,5).map(item => {
+                    // 左侧大图，右侧内容
+                    const img = item.image ? `<img src="${item.image}" alt="" style="width:480px;max-width:100vw;height:320px;object-fit:cover;border-radius:0.7em;box-shadow:0 2px 16px #0002;">` : '<div style="width:480px;max-width:100vw;height:320px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border-radius:0.7em;">📰</div>';
+                    return `
+                    <article style="display:flex;gap:2.5rem;align-items:flex-start;margin-bottom:2.7rem;flex-wrap:wrap;">
+                        <div style="flex-shrink:0;">${img}</div>
+                        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;justify-content:center;max-width:calc(100% - 500px);">
+                            <div style="color:#222;font-size:1.18rem;margin-bottom:0.2em;">${item.date}</div>
+                            <div style="font-weight:800;font-size:2.2rem;line-height:1.1;margin-bottom:0.3em;">${item.title}</div>
+                            <div style="font-size:1.5rem;line-height:1.3;margin-bottom:1.1em;">${item.summary}</div>
+                            ${item.link ? `<a href="${item.link}" target="_blank" style="display:inline-block;padding:0.4em 1.3em;font-size:1.2rem;border:2px solid #222;border-radius:1.7em;text-decoration:none;color:#111;font-weight:500;transition:background .18s;line-height:1.2;">→ Zum Artikel</a>` : ''}
+                        </div>
+                    </article>
+                    `;
+                }).join('');
+                container.innerHTML = list || '<p>No news available.</p>';
+            }catch(err){
+                container.innerHTML = '<p style="color:crimson">Failed to load news.</p>';
+                console.error('loadNews error', err);
+            }
+        }
+        // Load when DOM ready
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadNews);
+        else loadNews();
+    })();
+</script>
+</html>

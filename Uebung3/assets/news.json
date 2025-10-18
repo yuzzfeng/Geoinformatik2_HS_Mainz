@@ -1,0 +1,44 @@
+[
+  {
+    "date": "2025-10-14",
+    "title": "Interpreting core forms of urban morphology with CoMo (2025)",
+    "summary": "New paper on explainable graph neural networks for urban morphology (Computers, Environment and Urban Systems).",
+    "image": "https://yuzzfeng.github.io/publications/2025_ceus_chen/2025_ceus_chen_hub664db201df0b73abd2e80f4ec2cea21_370853_1000x0_resize_q75_box.jpeg",
+    "link": "https://yuzzfeng.github.io/publications/2025_ceus_chen/"
+  },
+  {
+    "date": "2024-10-01",
+    "title": "Walking in the Shade: Shadow-oriented Navigation (2024)",
+    "summary": "Shadow-oriented navigation system that optimizes pedestrian routes for shade and comfort (ACM GIS 2024).",
+    "image": "https://yuzzfeng.github.io/publications/2024_acm_feng/2024_acm_feng_hu36c2baaadd810e567fd1622ad8af87d8_446945_1000x0_resize_q75_box.jpg",
+    "link": "https://yuzzfeng.github.io/publications/2024_acm_feng/"
+  },
+  {
+    "date": "2024-06-15",
+    "title": "Gap completion in point cloud scenes using SGC-Net (2024)",
+    "summary": "Method for gap completion in occluded urban point clouds using deep learning (ISPRS Journal).",
+    "image": "https://yuzzfeng.github.io/publications/2024_isprs_feng/2024_isprs_feng_hub03ec0d3853ddb3126b47b1a636545e7_449700_1000x0_resize_q75_box.jpeg",
+    "link": "https://yuzzfeng.github.io/publications/2024_isprs_feng/"
+  },
+  {
+    "date": "2022-08-20",
+    "title": "Determination of building flood risk maps from LiDAR mobile mapping data (2022)",
+    "summary": "Using LiDAR mobile mapping to derive per-building flood risk maps (Computers, Environment and Urban Systems).",
+    "image": "https://yuzzfeng.github.io/publications/2022_ceus_feng/2022_ceus_feng_hu2662d39a2e20ef422524385e1d8b41f7_462372_1000x0_resize_q75_box.jpeg",
+    "link": "https://yuzzfeng.github.io/publications/2022_ceus_feng/"
+  },
+  {
+    "date": "2022-05-01",
+    "title": "Extraction and analysis of natural disaster-related VGI from social media (2022)",
+    "summary": "Review on extracting and using VGI from social media for natural disaster analysis (IJGIS).",
+    "image": "https://yuzzfeng.github.io/publications/2022_ijgis_feng/2022_ijgis_feng_hu52fd02e9bc0b4d278aa1880cd188aad2_315551_1000x0_resize_q75_box.jpeg",
+    "link": "https://yuzzfeng.github.io/publications/2022_ijgis_feng/"
+  },
+  {
+    "date": "2020-09-10",
+    "title": "Flood severity mapping from VGI (2020)",
+    "summary": "Case study using social media images to estimate flood severity (ISPRS).",
+    "image": "https://yuzzfeng.github.io/publications/2020_isprs_feng/2020_isprs_feng_hu2858b7076276e7ee37904894473b9c43_413371_1000x0_resize_q75_box.jpeg",
+    "link": "https://yuzzfeng.github.io/publications/2020_isprs_feng/"
+  }
+]

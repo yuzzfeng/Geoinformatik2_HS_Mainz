@@ -1,0 +1,98 @@
+<html lang="en">
+    <head>
+     <meta charset="utf-8">
+     <title> LoD2 Gebaeude </title>
+     <!-- Laden der benötigen Javascript und CSS-Datei von Cesium -->
+     <script script src="https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Cesium.js"></script>
+     <link href="https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+     <style>
+         html, body, #cesiumContainer {
+             width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+         }
+     </style>
+   </head>
+   <body>
+      <div id="cesiumContainer"></div>
+
+    <script>
+    // optional: Cesium.Ion.defaultAccessToken = 'XXXX';
+
+    // Initialisierung des Cesium-Viewers
+    var viewer = new Cesium.Viewer('cesiumContainer',{
+     shadows: false,
+     geocoder: false,
+     baseLayerPicker: false
+    });
+
+    // Hintergrundkarte für die Gebiete außerhalb von Deutschland
+    var osm= new Cesium.OpenStreetMapImageryProvider({
+      url : '//a.tile.openstreetmap.org/',
+      credit: new Cesium.Credit("\u003ca href=\"https://www.openstreetmap.org/copyright\""+
+                   "target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e", true)
+   });
+   viewer.imageryLayers.addImageryProvider(osm);
+
+   // Hintergrundkarte festlegen - WMS der SmartMapping Karte. Leider unterstützt Cesium keine Vector-Tiles.
+   const provider = new Cesium.WebMapServiceImageryProvider({
+    url : 'https://sgx.geodatenzentrum.de/wms_basemapde?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities',
+    layers: "de_basemapde_web_raster_farbe",
+    parameters: {
+      transparent: true,
+      format: "image/png",
+    }
+  });
+  viewer.imageryLayers.addImageryProvider(provider);
+
+  // Kamera auf Hochschule Mainz (präziser Punkt) zentrieren
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(8.226646983932763, 49.988427329774865, 1500.0), // Hochschule Mainz 精确坐标
+    orientation: {
+      heading: Cesium.Math.toRadians(0.0),
+      pitch: Cesium.Math.toRadians(-50.0),
+      roll: 0.0
+    }
+  });
+
+  
+    // 3D-Tileset ergänzen, welches die LoD2-Gebäude von der Smart-Mapping Seite lädt
+    window.startup = async function (Cesium) {
+       'use strict';
+       try {
+          const tileset = await Cesium.Cesium3DTileset.fromUrl(
+                "https://sg.geodatenzentrum.de/gdz_basemapde_3d_gebaeude/lod2_4978_null.json",
+                { showOutline: false }
+          );
+
+           viewer.scene.primitives.add(tileset);
+
+           // Die definierten Flächen können individuell eingefärbt werden.
+           var cityStyle = new Cesium.Cesium3DTileStyle({
+              color : {
+               conditions : [
+                ["${surface} === 'wall'", "color('#f2f2f2')"],
+                ["${surface} === 'roof'", "color('#ff5c4d')"],
+                ["${surface} === 'bridge'", "color('#999999')"]
+               ]
+              },
+            });
+          tileset.style = cityStyle
+      } catch (error) {
+           console.error(`Error creating tileset: ${error}`);
+      }
+   };
+
+    // Beim Aufruf der Anwendung die Gebäude laden
+    if (typeof Cesium !== 'undefined') {
+        window.startupCalled = true;
+        window.startup(Cesium).catch((error) => {
+          "use strict";
+          console.error(error);
+        });
+    }
+      </script>
+   </body>
+  </html>  
