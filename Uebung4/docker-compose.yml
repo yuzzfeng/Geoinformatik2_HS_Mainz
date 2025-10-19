@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - dbdata:/var/lib/postgresql/data   # ★ 只保留数据卷
+      - dbdata:/var/lib/postgresql/data   # Nur Datenvolume (persistente Speicherung)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
