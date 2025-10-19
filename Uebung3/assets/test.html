@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>pydeck / deck.gl + Carto Light + WMS 测试</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- MapLibre GL -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+    <!-- deck.gl 核心与 geo-layers（TileLayer/BitmapLayer 所在包已包含在 dist.min.js 中） -->
+    <script src="https://unpkg.com/deck.gl@8.9.36/dist.min.js"></script>
+    <style>
+      html, body, #map { height: 100%; margin: 0; }
+      .legend {
+        position: absolute;
+        z-index: 2;
+        top: 12px; left: 12px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.9);
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .legend b { font-size: 13px; }
+      .legend code { background: #f3f3f3; padding: 1px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div class="legend">
+      <b>Carto Light + WMS 叠加 示例</b><br/>
+      底图：Carto Positron（无需 Key）<br/>
+      WMS：<code>topp:states</code>（Geoserver Demo）<br/>
+      说明：WMS 通过 deck.gl <code>TileLayer</code> + <code>BitmapLayer</code> 按瓦片请求（透明 PNG）<br/>
+    </div>
+
+    <script>
+      // 初始化 MapLibre 底图（Carto Positron，无需 Key）
+      const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        center: [-96, 37.8], // 美国居中
+        zoom: 4,
+        pitch: 0,
+        attributionControl: true
+      });
+
+      // deck.gl 与 MapLibre 的叠加
+      const overlay = new deck.MapboxOverlay({
+        interleaved: true, // 让 WebGL 叠加与底图正确混合
+        layers: []
+      });
+
+      map.addControl(overlay);
+
+      // 示例 WMS 服务（公开 Demo）：Geoserver topp:states
+      // 用 WMS 1.3.0 + EPSG:4326（轴顺序为 lat,lon，即 south,west,north,east）
+      const WMS_BASE =
+        'https://ahocevar.com/geoserver/wms?' +
+        'service=WMS&version=1.3.0&request=GetMap' +
+        '&layers=topp:states' +
+        '&styles=' +
+        '&format=image/png' +
+        '&transparent=true' +
+        '&crs=EPSG:4326' +
+        '&width=256&height=256' +
+        '&bbox='; // 这里后面接 south,west,north,east
+
+      // WMS 叠加：通过 TileLayer 逐瓦片请求，再用 BitmapLayer 贴到该瓦片的经纬度范围
+      const wmsLayer = new deck.TileLayer({
+        id: 'wms-layer',
+        tileSize: 256,
+        minZoom: 0,
+        maxZoom: 14,
+        refinementStrategy: 'no-overlap',
+        renderSubLayers: (subLayerProps) => {
+          const {west, south, east, north} = subLayerProps.tile.bbox; // WGS84 (lon/lat)
+          // 注意 WMS 1.3.0 + EPSG:4326 的 bbox 顺序：S, W, N, E（lat, lon, lat, lon）
+          const url = `${WMS_BASE}${south},${west},${north},${east}`;
+          return new deck.BitmapLayer(subLayerProps, {
+            id: `${subLayerProps.id}-bitmap`,
+            bounds: [west, south, east, north], // [minX, minY, maxX, maxY]，WGS84
+            image: url,
+            opacity: 0.75, // 半透明叠加到底图
+            desaturate: 0,
+          });
+        }
+      });
+
+      // 加一个可视化点层（验证交互/叠加）
+      const scatter = new deck.ScatterplotLayer({
+        id: 'poi',
+        data: [
+          {name: 'Tiananmen', position: [116.397, 39.908]},
+          {name: 'Golden Gate', position: [-122.478, 37.8199]},
+        ],
+        getPosition: d => d.position,
+        getRadius: 60000, // 米
+        radiusUnits: 'meters',
+        pickable: true
+      });
+
+      // 将图层交给 overlay
+      overlay.setProps({ layers: [wmsLayer, scatter] });
+
+      // 鼠标提示
+      map.on('mousemove', (e) => {
+        const info = overlay.pickObject({x: e.point.x, y: e.point.y});
+        map.getCanvas().style.cursor = info ? 'pointer' : '';
+      });
+
+      // 点击提示
+      map.on('click', (e) => {
+        const info = overlay.pickObject({x: e.point.x, y: e.point.y});
+        if (info && info.layer && info.layer.id === 'poi') {
+          const name = info.object.name;
+          new maplibregl.Popup()
+            .setLngLat(info.object.position)
+            .setHTML(`<b>${name}</b>`)
+            .addTo(map);
+        }
+      });
+
+      // 兼容：确保 overlay 跟随地图视图
+      map.on('move', () => {
+        overlay.setProps({
+          viewState: {
+            longitude: map.getCenter().lng,
+            latitude: map.getCenter().lat,
+            zoom: map.getZoom(),
+            bearing: map.getBearing(),
+            pitch: map.getPitch()
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

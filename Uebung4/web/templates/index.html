@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8"/>
+  <title>Flask + PostGIS Demo</title>
+  <style>body{font-family:system-ui,Arial;padding:24px} pre{background:#f7f7f7;padding:12px;border-radius:8px}</style>
+</head>
+<body>
+  <h1>✅ Service is running</h1>
+  <p>If the table below shows data from the database, the connection is OK:</p>
+  <div id="out">Loading...</div>
+
+  <script>
+    fetch('/api/places')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          document.getElementById('out').textContent = 'No data.';
+          return;
+        }
+        // Build table
+        let html = '<table border="1" cellpadding="6" style="border-collapse:collapse;border-radius:8px;box-shadow:0 2px 8px #0001;background:#fff;">';
+        html += '<thead><tr>';
+        for (const key of Object.keys(data[0])) html += `<th>${key}</th>`;
+        html += '</tr></thead><tbody>';
+        for (const row of data) {
+          html += '<tr>';
+          for (const key of Object.keys(data[0])) html += `<td>${row[key]}</td>`;
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('out').innerHTML = html;
+      })
+      .catch(e => {
+        document.getElementById('out').textContent = 'Failed to fetch /api/places: ' + e;
+      });
+  </script>
+</body>
+</html>

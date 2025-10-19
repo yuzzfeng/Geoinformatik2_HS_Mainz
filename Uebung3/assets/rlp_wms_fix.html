@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>RLP WMS (61675) 纠错版 - deck.gl + Carto Light</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/deck.gl@8.9.36/dist.min.js"></script>
+    <style>
+      html, body, #map { height: 100%; margin: 0; }
+      .panel {
+        position: absolute; left: 12px; top: 12px; z-index: 3;
+        background: rgba(255,255,255,0.92); padding: 10px 12px;
+        border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-size: 12px;
+      }
+      .panel code { background:#f3f3f3; padding: 1px 4px; border-radius: 4px; }
+      .toolbar { position:absolute; right:12px; top:12px; z-index:3; background:rgba(255,255,255,.92); padding:8px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.12); }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div class="panel">
+      <b>RLP DOP20 WMS（layer_id=61675）</b><br/>
+      尝试参数：<code>INSPIRE=1</code>, <code>WMS 1.3.0</code>, <code>CRS=EPSG:4326</code>（bbox: 南,西,北,东）<br/>
+      若仍看不到，极可能是 <b>CORS</b> 限制。请改用同域代理/MapProxy 或服务方开启 CORS。<br/>
+      打开控制台（F12）查看瓦片请求是否 200 / CORS 错误。
+    </div>
+    <div class="toolbar">
+      透明度 <input id="op" type="range" min="0" max="1" step="0.05" value="0.8">
+    </div>
+    <script>
+      const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        center: [7.5, 50.2],
+        zoom: 7.2
+      });
+
+      const overlay = new deck.MapboxOverlay({ interleaved:true, layers: [] });
+      map.addControl(overlay);
+
+      // 带 INSPIRE=1 的 WMS 基地址（注意保留末尾的 &bbox= ）
+      const WMS_BASE =
+        'https://www.geoportal.rlp.de/mapbender/php/wms.php' +
+        '?INSPIRE=1' +
+        '&service=WMS&version=1.3.0&request=GetMap' +
+        '&layer_id=61675' +
+        '&styles=' +
+        '&format=image/png' +
+        '&transparent=true' +
+        '&CRS=EPSG:4326' +
+        '&width=256&height=256' +
+        '&bbox=';
+
+      let opacity = 0.8;
+
+      const wmsLayer = new deck.TileLayer({
+        id: 'wms',
+        tileSize: 256,
+        minZoom: 0,
+        maxZoom: 19,
+        refinementStrategy: 'no-overlap',
+        // 捕捉加载错误
+        onTileError: (err, tile) => {
+          console.warn('Tile error', err, tile && tile.bbox);
+        },
+        renderSubLayers: (props) => {
+          const {west, south, east, north} = props.tile.bbox;
+          // 1.3.0 + EPSG:4326 -> bbox 顺序：南,西,北,东（lat,lon,lat,lon）
+          const url = `${WMS_BASE}${south},${west},${north},${east}`;
+          return new deck.BitmapLayer(props, {
+            id: `${props.id}-bmp`,
+            bounds: [west, south, east, north],
+            image: url,
+            opacity: opacity,
+            loadOptions: { image: { crossOrigin: 'anonymous' } } // 尝试 CORS
+          });
+        }
+      });
+
+      const poi = new deck.ScatterplotLayer({
+        id: 'poi',
+        data: [{name:'Mainz', position:[8.247, 50.001]}],
+        getPosition: d => d.position,
+        getRadius: 12000,
+        radiusUnits: 'meters',
+        pickable: true
+      });
+
+      overlay.setProps({ layers: [wmsLayer, poi] });
+
+      document.getElementById('op').addEventListener('input', (e) => {
+        opacity = parseFloat(e.target.value);
+        overlay.setProps({ layers: [wmsLayer.clone({}), poi] });
+      });
+
+      map.on('move', () => {
+        overlay.setProps({
+          viewState: {
+            longitude: map.getCenter().lng,
+            latitude: map.getCenter().lat,
+            zoom: map.getZoom(),
+            bearing: map.getBearing(),
+            pitch: map.getPitch()
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

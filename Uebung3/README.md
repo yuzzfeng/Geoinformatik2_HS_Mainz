@@ -10,7 +10,7 @@ Nach dieser Übung können Sie:
 - die HTML-Daten `*.html` herunterladen.
 
 ## Überblick
-- https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung2/Uebung2_Folium_Student.ipynb
+- https://nbviewer.org/github/yuzzfeng/Geoinformatik2_HS_Mainz/blob/main/Uebung3/Uebung3_Folium_Student.ipynb
 
 ## Materialen zu bearbeiten
 - Colab Notebook https://drive.google.com/file/d/1Tt8KefdDQxWbimkvMBNkVWvVIC6xYv4D/view?usp=sharing
