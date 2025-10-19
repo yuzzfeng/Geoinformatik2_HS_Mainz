@@ -4,13 +4,13 @@ import os
 
 app = Flask(__name__)
 
-# 读取 compose 里传入的数据库 URL（db 容器名作主机）
+# Datenbank-URL aus Umgebungsvariable lesen (db = Container-Name als Host)
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres")
 engine = create_engine(DB_URL, pool_pre_ping=True)
 
 @app.get("/")
 def home():
-    # 渲染 /templates/index.html
+    # Rendert /templates/index.html
     return render_template("index.html")
 
 @app.get("/api/health")
@@ -28,5 +28,5 @@ def places():
     return jsonify(data)
 
 if __name__ == "__main__":
-    # 直接用 Python 启动（我们现在不用 flask CLI）
+    # Direkt mit Python starten (ohne flask CLI)
     app.run(host="0.0.0.0", port=5000)
