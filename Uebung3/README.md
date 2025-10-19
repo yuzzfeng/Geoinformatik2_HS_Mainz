@@ -1,5 +1,5 @@
 Geoinformatik 2 – Web-GIS
-# Übung 3 · Interaktive Webkarte mit Folium & Python, Cesium
+# Übung 3 · Webkarte mit APIs and SDKs
 Prof. Dr. Yu Feng
 
 ## Lernziele
