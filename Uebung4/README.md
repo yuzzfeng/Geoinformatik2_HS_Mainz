@@ -17,6 +17,16 @@ Nach dieser Übung können Sie:
    - macOS (Apple Silicon): https://docs.docker.com/desktop/setup/install/mac-install/ 
    - Windows: https://docs.docker.com/desktop/setup/install/windows-install/  
 
+   > **⚠️ Wichtig für Windows-Nutzer:**  
+   > Manche ältere Windows-Versionen (z. B. Windows 10 Home vor Version 21H2 oder Windows ohne WSL 2-Unterstützung) können Docker Desktop nicht ausführen.  
+   > 
+   > **Bitte vorher prüfen:**  
+   > - Fragen Sie **ChatGPT** oder **GitHub Copilot**: *"Unterstützt meine Windows-Version Docker Desktop? Ich nutze [Ihre Windows-Version und Build-Nummer]."*  
+   > - Windows-Version anzeigen: `⊞ Win` + `R` → `winver` eingeben → Enter  
+   > 
+   > **Falls Ihr System nicht kompatibel ist:**  
+   > - Arbeiten Sie mit einem Kommilitonen zusammen, der Docker nutzen kann
+
 2. Installation prüfen:  
    ```bash
    docker --version
