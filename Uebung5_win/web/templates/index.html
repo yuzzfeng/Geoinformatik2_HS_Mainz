@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8"/>
+  <title>Flask + PostGIS Demo</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <style>
+    body{font-family:system-ui,Arial;padding:24px}
+    pre{background:#f7f7f7;padding:12px;border-radius:8px}
+    #map{height:480px;border-radius:8px;box-shadow:0 2px 8px #0001;margin-top:16px}
+    .hint{color:#666;font-size:12px}
+  </style>
+</head>
+<body>
+  <h1>✅ Service is running</h1>
+  <p>If the table below shows data from the database, the connection is OK:</p>
+  <div id="out">Loading...</div>
+
+  <h2 style="margin-top:28px">🗺️ GeoServer WMS + WFS Preview</h2>
+  <p class="hint">WMS 来自 GeoServer 渲染的地图瓦片; WFS 以 GeoJSON 形式加载要素以便交互。</p>
+  <div id="map"></div>
+
+  <script>
+    fetch('/api/places')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          document.getElementById('out').textContent = 'No data.';
+          return;
+        }
+        // Build table
+        let html = '<table border="1" cellpadding="6" style="border-collapse:collapse;border-radius:8px;box-shadow:0 2px 8px #0001;background:#fff;">';
+        html += '<thead><tr>';
+        for (const key of Object.keys(data[0])) html += `<th>${key}</th>`;
+        html += '</tr></thead><tbody>';
+        for (const row of data) {
+          html += '<tr>';
+          for (const key of Object.keys(data[0])) html += `<td>${row[key]}</td>`;
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('out').innerHTML = html;
+      })
+      .catch(e => {
+        document.getElementById('out').textContent = 'Failed to fetch /api/places: ' + e;
+      });
+  </script>
+  
+  <!-- Leaflet + WMS/WFS 示例 -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // 基础底图 (OSM)
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+
+    const map = L.map('map', {
+      center: [50.0, 8.27],  // Mainz 区域
+      zoom: 10,
+      layers: [osm]
+    });
+
+    // GeoServer WMS 图层（workspace: uebung）
+    const WMS_URL = 'http://localhost:8080/geoserver/uebung/wms';
+    
+    // 显示 mainz 栅格图层
+    const wmsMainz = L.tileLayer.wms(WMS_URL, {
+      layers: 'uebung:mainz',
+      format: 'image/png',
+      transparent: true
+    });
+    wmsMainz.addTo(map);
+
+    // 图层控制
+    const layersControl = L.control.layers(
+      { 'OpenStreetMap': osm },
+      { 'WMS (mainz)': wmsMainz }
+    ).addTo(map);
+
+    // 自动从 WMS Capabilities 发现并添加其他可用图层（排除已手动添加的 mainz 和 places）
+    (async () => {
+      try {
+        const capsUrl = WMS_URL + '?service=WMS&request=GetCapabilities';
+        const resp = await fetch(capsUrl);
+        if (!resp.ok) throw new Error('Capabilities HTTP ' + resp.status);
+        const text = await resp.text();
+        const xml = new DOMParser().parseFromString(text, 'application/xml');
+        const names = Array.from(xml.querySelectorAll('Layer > Name')).map(n => n.textContent || '').filter(Boolean);
+        // 限定在工作区 uebung 下，排除已添加的 mainz 和 places
+        const candidates = names.filter(n => n.startsWith('uebung:') && n !== 'uebung:mainz' && n !== 'uebung:places');
+        candidates.sort().forEach(lyrName => {
+          const wmsAuto = L.tileLayer.wms(WMS_URL, { layers: lyrName, format: 'image/png', transparent: true });
+          layersControl.addOverlay(wmsAuto, `WMS (${lyrName.replace('uebung:','')})`);
+        });
+      } catch (e) {
+        console.warn('解析 WMS Capabilities 失败或未找到其它图层：', e);
+      }
+    })();
+
+    // GeoServer WFS (GeoJSON) 叠加层：优先加载 uebung:points（来自 PostGIS），失败时回退 uebung:places
+    function loadWfs(typeName) {
+      const url = `http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${encodeURIComponent(typeName)}&outputFormat=application/json`;
+      return fetch(url).then(r => {
+        if (!r.ok) throw new Error('WFS HTTP ' + r.status);
+        return r.json();
+      }).then(geojson => {
+        const lyr = L.geoJSON(geojson, {
+          pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#d33', weight: 2, fillColor: '#f88', fillOpacity: 0.7 }),
+          onEachFeature: (f, layer) => {
+            const props = Object.entries(f.properties || {}).map(([k,v]) => `<div><b>${k}</b>: ${v}</div>`).join('');
+            layer.bindPopup(props || 'No attributes');
+          }
+        }).addTo(map);
+        layersControl.addOverlay(lyr, `WFS (${typeName.replace('uebung:','')})`);
+        try { map.fitBounds(lyr.getBounds(), { padding: [20,20] }); } catch {}
+        return lyr;
+      });
+    }
+
+    loadWfs('uebung:points').catch(() => loadWfs('uebung:places')).catch(err => {
+      console.warn('WFS 加载失败（points 和 places 都不可用）:', err);
+    });
+  </script>
+</body>
+</html>
