@@ -4,17 +4,18 @@ Prof. Dr. Yu Feng
 
 ## Lernziele
 Nach dieser Übung können Sie:
-- Installation und erster Umgang mit Docker Desktop (macOS, Windows, Linux)  
+- Installation und erster Umgang mit Docker Desktop (macOS, Windows)  
 - Starten von zwei Containern mit `docker-compose`:  
   - **db**: PostGIS-Datenbank  
   - **web**: Flask-Webanwendung  
 - Verständnis für Container Networking (Kommunikation zwischen Web ↔ Datenbank)  
-- Arbeiten mit Logs, Healthcheck, Ports und Volumes  
 - Aufbau einer minimalen Web-GIS-Anwendung: Lesen von Punkten aus PostGIS und Bereitstellung als JSON-API (`/api/places`)  
 
 ## Schritt 1 · Docker installieren
 1. **Docker Desktop** herunterladen und installieren:  
+   
    - macOS (Apple Silicon): https://docs.docker.com/desktop/setup/install/mac-install/ 
+   
    - Windows: https://docs.docker.com/desktop/setup/install/windows-install/  
 
    > **⚠️ Wichtig für Windows-Nutzer:**  
@@ -37,7 +38,11 @@ Nach dieser Übung können Sie:
    ```bash
    # Docker Hello World Container ausführen
    docker run hello-world
+   ```
+
+4. Erste Server mit Docker (nginx):   
    
+   ```bash
    # Einen einfachen Webserver starten
    docker run -d -p 8080:80 --name my-nginx nginx:alpine
    
@@ -253,8 +258,11 @@ docker compose ps
 
 👉 Mit dieser Übung lernen wir:  
 - Grundaufbau von Docker-Containern und Compose-Dateien  
-- Zusammenspiel von Datenbank- und Web-Service  
+- Zusammenspiel von Datenbank-Service  
 - Ein erstes Web-GIS-API mit Flask + PostGIS
+
+## Deine Aufgabe
+Erweitern Sie die Datei index.html und 01_init.sql, sodass anstelle der eingegebenen Daten die Standorte von Mainz, Frankfurt am Main, und Wiesbaden auf einer Leaflet-Karte visualisiert werden.
 
 ## Erwartete Webseite
 
