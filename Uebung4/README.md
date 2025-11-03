@@ -61,7 +61,8 @@ Uebung4/
 ├─ docker-compose.yml
 ├─ db.Dockerfile
 ├─ initdb/
-│   └─ 01_init.sql
+│   ├─ 01_init.sql
+│   └─ 10_postgis.sh
 └─ web/
     ├─ Dockerfile
     ├─ requirements.txt
