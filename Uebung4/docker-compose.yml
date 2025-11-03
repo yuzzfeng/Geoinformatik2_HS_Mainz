@@ -3,8 +3,8 @@ services:
   db:
     platform: linux/amd64
     build:
-      context: .
-      dockerfile: db.Dockerfile
+      context: ./db
+      dockerfile: Dockerfile
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres

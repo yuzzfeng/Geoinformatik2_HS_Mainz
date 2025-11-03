@@ -59,10 +59,11 @@ Erstelle ein Verzeichnis `Uebung4/` mit folgender Struktur:
 ```
 Uebung4/
 ├─ docker-compose.yml
-├─ db.Dockerfile
-├─ initdb/
-│   ├─ 01_init.sql
-│   └─ 10_postgis.sh
+├─ db/
+│   ├─ Dockerfile
+│   └─ initdb/
+│       ├─ 01_init.sql
+│       └─ 10_postgis.sh
 └─ web/
     ├─ Dockerfile
     ├─ requirements.txt
@@ -75,11 +76,11 @@ Uebung4/
 
 ## Schritt 3 · PostGIS-Datenbank
 
-Das **db.Dockerfile** erstellt ein PostGIS-Image und packt die Initialisierungsskripte direkt mit hinein. Die SQL-Dateien aus `initdb/` werden beim ersten Start der Datenbank automatisch ausgeführt und legen Tabellen und Beispieldaten an.
+Das **db/Dockerfile** erstellt ein PostGIS-Image und packt die Initialisierungsskripte direkt mit hinein. Die SQL-Dateien aus `db/initdb/` werden beim ersten Start der Datenbank automatisch ausgeführt und legen Tabellen und Beispieldaten an.
 
 Wir kopieren die Skripte ins Image (statt sie als Volume zu mounten), damit das fertige Image überall ohne externe Abhängigkeiten läuft und Berechtigungsprobleme zwischen verschiedenen Betriebssystemen vermieden werden.
 
-**db.Dockerfile**  
+**db/Dockerfile**  
 ```dockerfile
 FROM postgis/postgis:16-3.4
 
@@ -104,7 +105,7 @@ USER postgres
 
 Das **Initialisierungsskript** aktiviert die PostGIS-Erweiterung, erstellt eine Tabelle `places` mit einer Geometrie-Spalte für Punkte (SRID 4326 = WGS84) und fügt zwei Beispielstädte (Beijing und Shanghai) mit ihren Koordinaten ein.
 
-**initdb/01_init.sql**  
+**db/initdb/01_init.sql**  
 ```sql
 CREATE EXTENSION IF NOT EXISTS postgis;
 DROP TABLE IF EXISTS places;
@@ -195,8 +196,8 @@ services:
   db:
     platform: linux/amd64
     build:
-      context: .
-      dockerfile: db.Dockerfile
+      context: ./db
+      dockerfile: Dockerfile
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -235,6 +236,9 @@ volumes:
 
 ## Schritt 6 · Container starten
 ```bash
+# ⚠️ Nur bei Problemen: Alles löschen und von vorne beginnen (inkl. Datenbank-Daten!)
+# docker compose down -v --remove-orphans
+
 # Images bauen (ohne Cache, um saubere Builds zu garantieren)
 docker compose build --no-cache
 
