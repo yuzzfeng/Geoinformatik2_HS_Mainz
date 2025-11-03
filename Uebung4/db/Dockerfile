@@ -1,4 +1,4 @@
-# Uebung4/db.Dockerfile
+# Uebung4/db/Dockerfile
 FROM postgis/postgis:16-3.4
 
 # Als root Verzeichnis und Berechtigungen vorbereiten
