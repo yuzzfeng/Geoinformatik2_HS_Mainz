@@ -15,6 +15,6 @@ fi
 
 echo "[initdb] Ensuring PostGIS extension will be created by our SQL (01_init.sql)."
 
-# 保证主脚本不会报错
+# Sicherstellen, dass das Hauptskript nicht fehlschlägt
 touch /docker-entrypoint-initdb.d/10_postgis.sh
 chmod +x /docker-entrypoint-initdb.d/10_postgis.sh

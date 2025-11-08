@@ -1,8 +1,7 @@
-# Uebung4/db.Dockerfile
+# Uebung5_win/db/Dockerfile
 FROM postgis/postgis:16-3.4
 
 # Als root Verzeichnis und Berechtigungen vorbereiten
-# USER root
 RUN mkdir -p /docker-entrypoint-initdb.d \
  && chown -R postgres:postgres /docker-entrypoint-initdb.d \
  && chmod 755 /docker-entrypoint-initdb.d
