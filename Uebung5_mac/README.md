@@ -219,10 +219,6 @@ cp geodata/* ~/Projects/geodata_temp/
    - Prüfen: Layer-Preview in GeoServer sollte einen neuen WFS-Layer (z.B. `uebung:cafes` oder `uebung:restaurants`) anzeigen.
    - **Leaflet:** Fügen Sie diesen neuen WFS-Layer als vierten Layer in die Webkarte ein.
 
-3. **Styling anpassen:** Erstellen Sie im GeoServer-Admin einen SLD-Style für `points` (z.B. unterschiedliche Farben nach Stadt)
-4. **Weitere GeoJSON-Layer:** Fügen Sie `lines.geojson` oder `polygons.geojson` hinzu und publizieren Sie als WFS
-5. **Leaflet erweitern:** Fügen Sie Layer-Control hinzu, damit Nutzer WMS/WFS ein-/ausschalten können
-
 ---
 
 👉 **Mit dieser Übung lernen Sie:**
