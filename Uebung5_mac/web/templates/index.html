@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh">
+<html lang="de">
 <head>
   <meta charset="utf-8"/>
   <title>Flask + PostGIS Demo</title>
@@ -16,8 +16,8 @@
   <p>If the table below shows data from the database, the connection is OK:</p>
   <div id="out">Loading...</div>
 
-  <h2 style="margin-top:28px">🗺️ GeoServer WMS + WFS Preview</h2>
-  <p class="hint">WMS 来自 GeoServer 渲染的地图瓦片; WFS 以 GeoJSON 形式加载要素以便交互。</p>
+  <h2 style="margin-top:28px">🗺️ GeoServer WMS + WFS Vorschau</h2>
+  <p class="hint">WMS liefert gerenderte Kartenkacheln; WFS lädt GeoJSON-Features für Interaktion.</p>
   <div id="map"></div>
 
   <script>
@@ -46,25 +46,25 @@
       });
   </script>
   
-  <!-- Leaflet + WMS/WFS 示例 -->
+  <!-- Leaflet + WMS/WFS Beispiel -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
-    // 基础底图 (OSM)
+    // Grundkarte (OSM)
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     });
 
     const map = L.map('map', {
-      center: [50.0, 8.27],  // Mainz 区域
+  center: [50.0, 8.27],  // Raum Mainz
       zoom: 10,
       layers: [osm]
     });
 
-    // GeoServer WMS 图层（workspace: uebung）
+  // GeoServer WMS Layer (Workspace: uebung)
     const WMS_URL = 'http://localhost:8080/geoserver/uebung/wms';
     
-    // 显示 mainz 栅格图层
+  // Zeigt den Rasterlayer 'mainz'
     const wmsMainz = L.tileLayer.wms(WMS_URL, {
       layers: 'uebung:mainz',
       format: 'image/png',
@@ -72,13 +72,13 @@
     });
     wmsMainz.addTo(map);
 
-    // 图层控制
+  // Layer-Steuerung
     const layersControl = L.control.layers(
       { 'OpenStreetMap': osm },
       { 'WMS (mainz)': wmsMainz }
     ).addTo(map);
 
-    // 自动从 WMS Capabilities 发现并添加其他可用图层（排除已手动添加的 mainz 和 places）
+  // Automatische Erkennung zusätzlicher WMS-Layer (ohne 'mainz' und 'places')
     (async () => {
       try {
         const capsUrl = WMS_URL + '?service=WMS&request=GetCapabilities';
@@ -87,18 +87,18 @@
         const text = await resp.text();
         const xml = new DOMParser().parseFromString(text, 'application/xml');
         const names = Array.from(xml.querySelectorAll('Layer > Name')).map(n => n.textContent || '').filter(Boolean);
-        // 限定在工作区 uebung 下，排除已添加的 mainz 和 places
+        // Nur Workspace 'uebung', ohne 'mainz' und 'places'
         const candidates = names.filter(n => n.startsWith('uebung:') && n !== 'uebung:mainz' && n !== 'uebung:places');
         candidates.sort().forEach(lyrName => {
           const wmsAuto = L.tileLayer.wms(WMS_URL, { layers: lyrName, format: 'image/png', transparent: true });
           layersControl.addOverlay(wmsAuto, `WMS (${lyrName.replace('uebung:','')})`);
         });
       } catch (e) {
-        console.warn('解析 WMS Capabilities 失败或未找到其它图层：', e);
+  console.warn('WMS Capabilities konnten nicht gelesen oder keine weiteren Layer gefunden:', e);
       }
     })();
 
-    // GeoServer WFS (GeoJSON) 叠加层：优先加载 uebung:points（来自 PostGIS），失败时回退 uebung:places
+  // GeoServer WFS (GeoJSON) Overlay: zuerst 'uebung:points' (PostGIS), Fallback 'uebung:places'
     function loadWfs(typeName) {
       const url = `http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${encodeURIComponent(typeName)}&outputFormat=application/json`;
       return fetch(url).then(r => {
@@ -119,7 +119,7 @@
     }
 
     loadWfs('uebung:points').catch(() => loadWfs('uebung:places')).catch(err => {
-      console.warn('WFS 加载失败（points 和 places 都不可用）:', err);
+      console.warn("WFS Laden fehlgeschlagen (weder 'points' noch 'places' verfügbar):", err);
     });
   </script>
 </body>

@@ -3,8 +3,8 @@ services:
   db:
     platform: linux/amd64
     build:
-      context: .
-      dockerfile: db.Dockerfile
+      context: ./db
+      dockerfile: Dockerfile
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -12,8 +12,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - dbdata:/var/lib/postgresql/data   # Nur Datenvolume (persistente Speicherung)
-      - ./geodata:/data:ro                # 只读挂载 geodata，便于容器内访问数据
+      - dbdata:/var/lib/postgresql/data   # Persistentes Datenvolume (PostgreSQL)
+      - ./geodata:/data:ro                # Read-only Mount für Geodaten im Container
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -38,7 +38,6 @@ services:
 
   geoserver:
     image: kartoza/geoserver:2.24.2
-    #container_name: geoserver
     depends_on:
       db:
         condition: service_healthy

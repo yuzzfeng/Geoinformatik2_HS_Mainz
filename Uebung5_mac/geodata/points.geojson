@@ -4,7 +4,7 @@
   "crs": { "type": "name", "properties": { "name": "EPSG:4326" } },
   "features": [
     { "type": "Feature", "properties": { "name": "Mainz" }, "geometry": { "type": "Point", "coordinates": [8.2473, 50.0012] } },
-    { "type": "Feature", "properties": { "name": "Berlin" }, "geometry": { "type": "Point", "coordinates": [13.4050, 52.5200] } },
+  { "type": "Feature", "properties": { "name": "Wiesbaden" }, "geometry": { "type": "Point", "coordinates": [8.2398, 50.0782] } },
     { "type": "Feature", "properties": { "name": "Frankfurt" }, "geometry": { "type": "Point", "coordinates": [8.6821, 50.1109] } }
   ]
 }

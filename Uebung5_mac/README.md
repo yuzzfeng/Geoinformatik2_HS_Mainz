@@ -30,7 +30,7 @@ GeoJSON (points.geojson)  →  PostGIS  →  GeoServer  →  WFS  →  Leaflet
 
 ### Was wird publiziert?
 - **WMS-Layer**: `uebung:mainz` (Raster-Basiskarte aus GeoTIFF)  
-- **WFS-Layer**: `uebung:points` (Interaktive Punkte aus PostGIS: Mainz, Berlin, Frankfurt)  
+- **WFS-Layer**: `uebung:points` (Interaktive Punkte aus PostGIS: Mainz, Wiesbaden, Frankfurt)  
 - **Datenbank-Test**: `places`-Tabelle (Beijing, Shanghai) für Verbindungsprüfung
 
 ---
@@ -40,12 +40,13 @@ GeoJSON (points.geojson)  →  PostGIS  →  GeoServer  →  WFS  →  Leaflet
 ```
 Uebung5/
 ├─ docker-compose.yml          # Orchestrierung aller Services
-├─ db.Dockerfile                # PostGIS mit Init-Skripten
-├─ initdb/
-│   ├─ 00_disable_template_postgis.sh  # Workaround für PostGIS-Konflikte
-│   └─ 01_init.sql              # Erstellt 'places'-Tabelle
+├─ db/
+│   ├─ Dockerfile               # PostGIS mit Init-Skripten
+│   └─ initdb/
+│       ├─ 01_init.sql          # Erstellt 'places'-Tabelle
+│       └─ 10_postgis.sh        # Platzhalter für PostGIS-Initialisierung
 ├─ geodata/                     # Zu publizierende Geodaten
-│   ├─ mainz.tif                # GeoTIFF (287 MB, wird als WMS publiziert)
+│   ├─ mainz.tif                # GeoTIFF (wird als WMS publiziert)
 │   └─ points.geojson           # Vektordaten (werden in PostGIS importiert)
 ├─ geoserver_init/
 │   ├─ Dockerfile               # Image für GeoServer-Konfiguration
@@ -65,6 +66,9 @@ Uebung5/
 ```bash
 # In Uebung5/ Verzeichnis
 cd Uebung5/
+
+# ⚠️ Nur bei Problemen: Alles löschen und von vorne beginnen (inkl. Datenbank-Daten!)
+# docker compose down -v --remove-orphans
 
 # Alle Images bauen
 docker compose build --no-cache
@@ -90,7 +94,7 @@ docker compose ps
 - Unten: Interaktive Karte mit:
   - OpenStreetMap Basiskarte
   - WMS-Layer: `uebung:mainz` (GeoTIFF-Hintergrund)
-  - WFS-Layer: `uebung:points` (klickbare Punkte: Mainz, Berlin, Frankfurt)
+  - WFS-Layer: `uebung:points` (klickbare Punkte: Mainz, Wiesbaden, Frankfurt)
 
 ### 2. GeoServer Admin-Panel
 **URL:** http://localhost:8080/geoserver/  
@@ -109,7 +113,7 @@ docker compose ps
 ### 4. WFS GetFeature (GeoJSON)
 **URL:** http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=uebung:points&outputFormat=application/json
 
-**Erwartung:** GeoJSON mit 3 Features (Mainz, Berlin, Frankfurt)
+**Erwartung:** GeoJSON mit 3 Features (Mainz, Wiesbaden, Frankfurt)
 
 ---
 
@@ -191,12 +195,33 @@ cp geodata/* ~/Projects/geodata_temp/
 
 ---
 
-## Weiterführende Aufgaben
+## Deine Aufgaben
 
-1. **Eigene GeoTIFF hinzufügen:** Laden Sie ein Satellitenbild herunter, legen Sie es in `geodata/` ab und starten Sie `geoserver-init` neu
-2. **Styling anpassen:** Erstellen Sie im GeoServer-Admin einen SLD-Style für `points` (z.B. unterschiedliche Farben nach Stadt)
-3. **Weitere GeoJSON-Layer:** Fügen Sie `lines.geojson` oder `polygons.geojson` hinzu und publizieren Sie als WFS
-4. **Leaflet erweitern:** Fügen Sie Layer-Control hinzu, damit Nutzer WMS/WFS ein-/ausschalten können
+1. **Neues Raster aus GeoPortal RLP herunterladen, konvertieren und publizieren:**
+   - Öffnen Sie den INSPIRE-Download-Link des GeoPortal RLP (Beispiel):
+     https://www.geoportal.rlp.de/mapbender/plugins/mb_downloadFeedClient.php?url=https%3A%2F%2Fwww.geoportal.rlp.de%2Fmapbender%2Fphp%2Fmod_inspireDownloadFeed.php%3Fid%3D2b009ae4-aa3e-ff21-870b-49846d9561b2%26type%3DSERVICE%26generateFrom%3Dremotelist
+   - Laden Sie eine benachbarte Kachel (z.B. als .zip oder .gml) herunter und konvertieren Sie sie mit GDAL zu GeoTIFF (`.tif`).
+   - Speichern Sie die GeoTIFF-Datei in `geodata/` und publizieren Sie sie:
+     - Variante A: Container kurz neu starten (GeoServer erkennt neue Dateien unter `/data`).
+     - Variante B: Initialisierung erneut ausführen:
+       
+       docker compose run --rm geoserver-init
+   - Prüfen: Layer-Preview in GeoServer sollte einen neuen WMS-Layer (z.B. `uebung:<dateiname>`) anzeigen.
+   - **Leaflet:** Fügen Sie diesen neuen WMS-Layer als dritten Layer in die Webkarte ein.
+
+2. **OSM-Datenpunkte (z.B. Café, Restaurant) herunterladen, als GeoJSON konvertieren und publizieren:**
+   - Nutzen Sie Overpass Turbo (https://overpass-turbo.eu/) oder eine andere OSM-API, um relevante POIs (z.B. Café, Restaurant) für Ihre Region als GeoJSON zu exportieren.
+   - Speichern Sie die GeoJSON-Datei in `geodata/` und publizieren Sie sie als WFS-Layer:
+     - Variante A: Automatischer Import durch gdal-import (falls aktiviert).
+     - Variante B: Manuell importieren:
+       
+       docker compose run --rm gdal-import
+   - Prüfen: Layer-Preview in GeoServer sollte einen neuen WFS-Layer (z.B. `uebung:cafes` oder `uebung:restaurants`) anzeigen.
+   - **Leaflet:** Fügen Sie diesen neuen WFS-Layer als vierten Layer in die Webkarte ein.
+
+3. **Styling anpassen:** Erstellen Sie im GeoServer-Admin einen SLD-Style für `points` (z.B. unterschiedliche Farben nach Stadt)
+4. **Weitere GeoJSON-Layer:** Fügen Sie `lines.geojson` oder `polygons.geojson` hinzu und publizieren Sie als WFS
+5. **Leaflet erweitern:** Fügen Sie Layer-Control hinzu, damit Nutzer WMS/WFS ein-/ausschalten können
 
 ---
 
