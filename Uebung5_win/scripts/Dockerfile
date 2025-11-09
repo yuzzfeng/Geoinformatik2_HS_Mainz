@@ -1,8 +1,9 @@
 FROM ghcr.io/osgeo/gdal:alpine-small-latest
 
-# Kopiere Import-Skript und setze ausführbare Rechte
-# Konvertiere auch mögliche CRLF zu LF, um /bin/sh Parsing-Fehler zu vermeiden
-COPY --chmod=0755 import_geojson.sh /app/import_geojson.sh
-RUN sed -i 's/\r$//' /app/import_geojson.sh || true
+# Kopiere das Import-Skript in das Image
+COPY import_geojson.sh /app/import_geojson.sh
+
+# Setze ausführbare Rechte und normalisiere CRLF für Windows-Kompatibilität
+RUN chmod +x /app/import_geojson.sh && sed -i 's/\r$//' /app/import_geojson.sh
 
 ENTRYPOINT ["/bin/sh", "/app/import_geojson.sh"]

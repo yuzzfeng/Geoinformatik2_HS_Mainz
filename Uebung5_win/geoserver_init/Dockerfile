@@ -1,14 +1,13 @@
 FROM curlimages/curl:8.10.1
 
-# Kopiere das Initialisierungs-Skript und setze ausführbare Rechte beim Build (vermeidet User-Wechsel)
-COPY --chmod=0755 init_geoserver.sh /app/init_geoserver.sh
+# Kopiere das Initialisierungs-Skript in das Image
+COPY init_geoserver.sh /app/init_geoserver.sh
 
-# Normalisiere Zeilenenden (CRLF->LF), um /bin/sh Parsing-Fehler zu vermeiden (benötigt temporär root)
-USER 0
-RUN sed -i 's/\r//g' /app/init_geoserver.sh || true
-USER curl_user
+# Setze ausführbare Rechte und normalisiere CRLF für Windows-Kompatibilität
+USER root
+RUN chmod +x /app/init_geoserver.sh && sed -i 's/\r$//' /app/init_geoserver.sh
 
-# Wechsel zurück zum curl-Benutzer (ursprünglicher unprivilegierter User des Images)
+# Wechsel zurück zum curl-Benutzer
 USER curl_user
 
 ENTRYPOINT ["/bin/sh", "/app/init_geoserver.sh"]

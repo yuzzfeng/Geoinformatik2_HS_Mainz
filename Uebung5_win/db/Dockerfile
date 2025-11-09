@@ -6,7 +6,7 @@ RUN mkdir -p /docker-entrypoint-initdb.d \
  && chown -R postgres:postgres /docker-entrypoint-initdb.d \
  && chmod 755 /docker-entrypoint-initdb.d
 
-# Skripte kopieren und Besitzer direkt auf postgres setzen
+# Init-Skripte kopieren
 COPY --chown=postgres:postgres initdb/*.sql /docker-entrypoint-initdb.d/
 COPY --chown=postgres:postgres initdb/*.sh  /docker-entrypoint-initdb.d/
 
