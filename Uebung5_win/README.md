@@ -206,9 +206,19 @@ docker compose run --rm gdal-import
    - Prüfen: Layer-Preview in GeoServer sollte einen neuen WFS-Layer (z.B. `uebung:cafes` oder `uebung:restaurants`) anzeigen.
    - **Leaflet:** Fügen Sie diesen neuen WFS-Layer als vierten Layer in die Webkarte ein.
 
+## Übung 4–6 – Abgabe
+
+- Machen Sie einen Screenshot Ihrer Ergebnisse.
+
+- Laden Sie den Screenshot in Ihr GitHub-Repository hoch.
+
+- Geben Sie in OLAT unter
+Geoinformatik 2 WiSe 2025/2026 → Übungsabgabe → Uebung 4–6 – Link
+den Link zu Ihrem Repository ab.
+
 ---
 
 👉 **Mit dieser Übung lernen Sie:**
 - Professionelle Geodaten-Publikation mit OGC-Standards (WMS/WFS)
-- Automatisierung von GIS-Workflows mit Docker + REST-API
+- Automatisierung von GIS-Workflows mit Docker + GeoServer
 - Integration von Raster (GeoTIFF) und Vektor (GeoJSON/PostGIS) in einer Webkarte
