@@ -101,14 +101,14 @@ docker compose ps
 **Login:** `admin` / `geoserver`
 
 **Prüfen Sie:**
-- **Layer Preview** → `uebung:mainz` (WMS) und `uebung:points` (WFS/WMS)
+- **Layer Preview** → `uebung:mainz` (WMS) und `uebung:points` (WFS)
 - **Workspaces** → Workspace `uebung` existiert
 - **Stores** → PostGIS-Datastore `pg_places` verbunden
 
 ### 3. WMS GetCapabilities
 **URL:** http://localhost:8080/geoserver/uebung/wms?service=WMS&request=GetCapabilities
 
-**Erwartung:** XML mit `<Layer><Name>uebung:mainz</Name></Layer>`
+**Erwartung:** XML mit `<Layer><Name>mainz</Name></Layer>`
 
 ### 4. WFS GetFeature (GeoJSON)
 **URL:** http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=uebung:points&outputFormat=application/json
@@ -170,19 +170,6 @@ docker compose exec db psql -U postgres -d postgres -c 'SELECT * FROM points;'
 **Falls Tabelle fehlt:**
 ```bash
 docker compose run --rm gdal-import
-```
-
-### Problem: "Operation not permitted" bei GDAL-Import
-**Ursache:** Google Drive-Mount-Probleme (falls Projektordner auf Google Drive liegt)
-
-**Lösung:**
-```bash
-# Geodaten in lokales Verzeichnis kopieren
-mkdir -p ~/Projects/geodata_temp
-cp geodata/* ~/Projects/geodata_temp/
-
-# docker-compose.yml anpassen (alle geodata-Mounts):
-# - ./geodata:/data:ro  →  ~/Projects/geodata_temp:/data:ro
 ```
 
 ---

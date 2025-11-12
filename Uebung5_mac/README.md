@@ -15,12 +15,12 @@ Nach dieser Übung können Sie:
 ## Überblick
 Diese Übung baut auf **Übung 4** (Flask + PostGIS) auf und erweitert das System um einen **GeoServer** zur professionellen Geodaten-Publikation:
 
-### Architektur (4 Services)
+### Architektur (5 Services)
 1. **db** (PostGIS): Datenbank für Vektordaten  
 2. **web** (Flask): Web-Anwendung mit interaktiver Karte  
 3. **geoserver** (Kartoza GeoServer): OGC-konformer Map-Server  
 4. **geoserver-init**: Automatische GeoServer-Konfiguration via REST-API  
-5. **gdal-import** (optional): Automatischer Import von GeoJSON nach PostGIS  
+5. **gdal-import**: Automatischer Import von GeoJSON nach PostGIS  
 
 ### Geodaten-Pipeline
 ```
@@ -101,14 +101,14 @@ docker compose ps
 **Login:** `admin` / `geoserver`
 
 **Prüfen Sie:**
-- **Layer Preview** → `uebung:mainz` (WMS) und `uebung:points` (WFS/WMS)
+- **Layer Preview** → `uebung:mainz` (WMS) und `uebung:points` (WFS)
 - **Workspaces** → Workspace `uebung` existiert
 - **Stores** → PostGIS-Datastore `pg_places` verbunden
 
 ### 3. WMS GetCapabilities
 **URL:** http://localhost:8080/geoserver/uebung/wms?service=WMS&request=GetCapabilities
 
-**Erwartung:** XML mit `<Layer><Name>uebung:mainz</Name></Layer>`
+**Erwartung:** XML mit `<Layer><Name>mainz</Name></Layer>`
 
 ### 4. WFS GetFeature (GeoJSON)
 **URL:** http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=uebung:points&outputFormat=application/json
@@ -172,19 +172,6 @@ docker compose exec db psql -U postgres -d postgres -c 'SELECT * FROM points;'
 docker compose run --rm gdal-import
 ```
 
-### Problem: "Operation not permitted" bei GDAL-Import
-**Ursache:** Google Drive-Mount-Probleme (falls Projektordner auf Google Drive liegt)
-
-**Lösung:**
-```bash
-# Geodaten in lokales Verzeichnis kopieren
-mkdir -p ~/Projects/geodata_temp
-cp geodata/* ~/Projects/geodata_temp/
-
-# docker-compose.yml anpassen (alle geodata-Mounts):
-# - ./geodata:/data:ro  →  ~/Projects/geodata_temp:/data:ro
-```
-
 ---
 
 ## Erwartete Webseite
@@ -200,7 +187,7 @@ cp geodata/* ~/Projects/geodata_temp/
 1. **Neues Raster aus GeoPortal RLP herunterladen, konvertieren und publizieren:**
    - Öffnen Sie den INSPIRE-Download-Link des GeoPortal RLP (Beispiel):
      https://www.geoportal.rlp.de/mapbender/plugins/mb_downloadFeedClient.php?url=https%3A%2F%2Fwww.geoportal.rlp.de%2Fmapbender%2Fphp%2Fmod_inspireDownloadFeed.php%3Fid%3D2b009ae4-aa3e-ff21-870b-49846d9561b2%26type%3DSERVICE%26generateFrom%3Dremotelist
-   - Laden Sie eine benachbarte Kachel (z.B. als .zip oder .gml) herunter und konvertieren Sie sie mit GDAL zu GeoTIFF (`.tif`).
+   - Laden Sie eine benachbarte Kachel (z.B. als .zip oder .gml) herunter und konvertieren Sie sie mit GDAL/QGIS zu GeoTIFF (`.tif`).
    - Speichern Sie die GeoTIFF-Datei in `geodata/` und publizieren Sie sie:
      - Variante A: Container kurz neu starten (GeoServer erkennt neue Dateien unter `/data`).
      - Variante B: Initialisierung erneut ausführen:
