@@ -17,7 +17,7 @@
   <div id="out">Loading...</div>
 
   <h2 style="margin-top:28px">🗺️ GeoServer WMS + WFS Vorschau</h2>
-  <p class="hint">WMS liefert gerenderte Kartenkacheln; WFS lädt GeoJSON-Features für Interaktion.</p>
+  <p class="hint">Raster-Daten (wie mainz.tif) über WMS; Vektor-Daten (PostGIS: points, places) über WFS.</p>
   <div id="map"></div>
 
   <script>
@@ -63,64 +63,112 @@
 
   // GeoServer WMS Layer (Workspace: uebung)
     const WMS_URL = 'http://localhost:8080/geoserver/uebung/wms';
-    
-  // Zeigt den Rasterlayer 'mainz'
-    const wmsMainz = L.tileLayer.wms(WMS_URL, {
-      layers: 'uebung:mainz',
-      format: 'image/png',
-      transparent: true
-    });
-    wmsMainz.addTo(map);
 
-  // Layer-Steuerung
+  // Layer-Steuerung (初始化，之后自动添加所有发现的Layer)
     const layersControl = L.control.layers(
       { 'OpenStreetMap': osm },
-      { 'WMS (mainz)': wmsMainz }
+      {}
     ).addTo(map);
 
-  // Automatische Erkennung zusätzlicher WMS-Layer (ohne 'mainz' und 'places')
+  // Automatische Erkennung aller WMS und WFS Layer
     (async () => {
       try {
         const capsUrl = WMS_URL + '?service=WMS&request=GetCapabilities';
+        console.log('Fetching WMS Capabilities from:', capsUrl);
+        
         const resp = await fetch(capsUrl);
+        console.log('WMS Capabilities Response Status:', resp.status);
+        
         if (!resp.ok) throw new Error('Capabilities HTTP ' + resp.status);
+        
         const text = await resp.text();
+        console.log('WMS Capabilities Response Length:', text.length);
+        
         const xml = new DOMParser().parseFromString(text, 'application/xml');
-        const names = Array.from(xml.querySelectorAll('Layer > Name')).map(n => n.textContent || '').filter(Boolean);
-        // Nur Workspace 'uebung', ohne 'mainz' und 'places'
-        const candidates = names.filter(n => n.startsWith('uebung:') && n !== 'uebung:mainz' && n !== 'uebung:places');
-        candidates.sort().forEach(lyrName => {
-          const wmsAuto = L.tileLayer.wms(WMS_URL, { layers: lyrName, format: 'image/png', transparent: true });
-          layersControl.addOverlay(wmsAuto, `WMS (${lyrName.replace('uebung:','')})`);
+        console.log('Parsed XML:', xml);
+        
+        // Alle Layer-Namen auslesen
+        const allLayers = Array.from(xml.querySelectorAll('Layer > Name')).map(n => n.textContent || '').filter(Boolean);
+        console.log('All layer names found:', allLayers);
+        
+        // Filter: Nur Layer aus dem uebung Workspace (können ohne Prefix sein)
+        // Ignoriere den Root "uebung" Layer selbst
+        const wmsLayers = allLayers.filter(n => n !== 'uebung');
+        console.log('Filtered WMS/WFS layers (all except "uebung"):', wmsLayers);
+        
+        if (wmsLayers.length === 0) {
+          console.warn('⚠️ No layers found!');
+          return;
+        }
+        
+        // Für jeden Layer: WMS hinzufügen (alle Layer als WMS verfügbar machen)
+        wmsLayers.forEach(lyrName => {
+          console.log(`✓ Adding WMS layer: ${lyrName}`);
+          const fullLayerName = lyrName.includes(':') ? lyrName : `uebung:${lyrName}`;
+          const wmsAuto = L.tileLayer.wms(WMS_URL, { 
+            layers: fullLayerName, 
+            format: 'image/png', 
+            transparent: true 
+          });
+          layersControl.addOverlay(wmsAuto, `🖼️ WMS - ${lyrName}`);
+        });
+        
+        // Für alle Layer: WFS/GeoJSON versuchen zu laden (wenn verfügbar)
+        console.log('\\n--- Attempting to load vector data via WFS ---');
+        const wfsUrl = 'http://localhost:8080/geoserver/uebung/ows';
+        
+        wmsLayers.forEach(lyrName => {
+          const fullLayerName = lyrName.includes(':') ? lyrName : `uebung:${lyrName}`;
+          const url = `${wfsUrl}?service=WFS&version=2.0.0&request=GetFeature&typeName=${encodeURIComponent(fullLayerName)}&outputFormat=application/json`;
+          
+          console.log(`  Attempting WFS for ${lyrName}...`);
+          
+          fetch(url)
+            .then(r => {
+              if (!r.ok) throw new Error('WFS HTTP ' + r.status);
+              return r.json();
+            })
+            .then(geojson => {
+              if (!geojson.features || geojson.features.length === 0) {
+                console.log(`  ℹ️ ${lyrName}: Keine Vektorfeatures (Raster-Layer)`);
+                return;
+              }
+              
+              console.log(`  ✓ ${lyrName}: ${geojson.features.length} Features`);
+              
+              const lyr = L.geoJSON(geojson, {
+                pointToLayer: (f, latlng) => L.circleMarker(latlng, { 
+                  radius: 6, 
+                  color: '#d33', 
+                  weight: 2, 
+                  fillColor: '#f88', 
+                  fillOpacity: 0.7 
+                }),
+                onEachFeature: (f, layer) => {
+                  const props = Object.entries(f.properties || {})
+                    .map(([k,v]) => `<div><b>${k}</b>: ${v}</div>`)
+                    .join('');
+                  layer.bindPopup(props || 'No attributes');
+                }
+              }).addTo(map);
+              
+              layersControl.addOverlay(lyr, `📍 WFS - ${lyrName}`);
+              
+              try { 
+                map.fitBounds(lyr.getBounds(), { padding: [20,20] }); 
+              } catch (e) {
+                console.log('Could not fit bounds:', e);
+              }
+            })
+            .catch(err => {
+              console.log(`  ℹ️ ${lyrName}: WFS nicht verfügbar`);
+            });
         });
       } catch (e) {
-  console.warn('WMS Capabilities konnten nicht gelesen oder keine weiteren Layer gefunden:', e);
+        console.error('❌ WMS/WFS Capabilities Error:', e);
       }
     })();
 
-  // GeoServer WFS (GeoJSON) Overlay: zuerst 'uebung:points' (PostGIS), Fallback 'uebung:places'
-    function loadWfs(typeName) {
-      const url = `http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${encodeURIComponent(typeName)}&outputFormat=application/json`;
-      return fetch(url).then(r => {
-        if (!r.ok) throw new Error('WFS HTTP ' + r.status);
-        return r.json();
-      }).then(geojson => {
-        const lyr = L.geoJSON(geojson, {
-          pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#d33', weight: 2, fillColor: '#f88', fillOpacity: 0.7 }),
-          onEachFeature: (f, layer) => {
-            const props = Object.entries(f.properties || {}).map(([k,v]) => `<div><b>${k}</b>: ${v}</div>`).join('');
-            layer.bindPopup(props || 'No attributes');
-          }
-        }).addTo(map);
-        layersControl.addOverlay(lyr, `WFS (${typeName.replace('uebung:','')})`);
-        try { map.fitBounds(lyr.getBounds(), { padding: [20,20] }); } catch {}
-        return lyr;
-      });
-    }
-
-    loadWfs('uebung:points').catch(() => loadWfs('uebung:places')).catch(err => {
-      console.warn("WFS Laden fehlgeschlagen (weder 'points' noch 'places' verfügbar):", err);
-    });
   </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ COPY init_geoserver.sh /app/init_geoserver.sh
 
 # Setze ausführbare Rechte
 USER root
+RUN apk add --no-cache postgresql-client
 RUN chmod +x /app/init_geoserver.sh
 
 # Wechsel zurück zum curl-Benutzer
