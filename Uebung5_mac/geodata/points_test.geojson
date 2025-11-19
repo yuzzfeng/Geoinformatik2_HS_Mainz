@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "name": "points",
+  "crs": { "type": "name", "properties": { "name": "EPSG:4326" } },
+  "features": [
+    { "type": "Feature", "properties": { "name": "Munich" }, "geometry": { "type": "Point", "coordinates": [11.5820, 48.1351] } },
+    { "type": "Feature", "properties": { "name": "Augsburg" }, "geometry": { "type": "Point", "coordinates": [10.8978, 48.3705] } },
+    { "type": "Feature", "properties": { "name": "Ingolstadt" }, "geometry": { "type": "Point", "coordinates": [11.4258, 48.7665] } }
+  ]
+}

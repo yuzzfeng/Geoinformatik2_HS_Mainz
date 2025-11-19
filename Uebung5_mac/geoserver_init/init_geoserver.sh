@@ -16,14 +16,20 @@ for i in $(seq 1 60); do
 done
 
 echo "Creating workspace 'uebung'..."
-curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
-  -d '<workspace><name>uebung</name></workspace>' \
-  -X POST "$GEOSERVER_URL/rest/workspaces" || true
+# Check if workspace already exists
+if ! curl -sf -u "$ADMIN_USER:$ADMIN_PASS" "$GEOSERVER_URL/rest/workspaces/uebung.json" >/dev/null 2>&1; then
+  curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+    -d '<workspace><name>uebung</name></workspace>' \
+    -X POST "$GEOSERVER_URL/rest/workspaces"
+  echo "Workspace 'uebung' created."
+else
+  echo "Workspace 'uebung' already exists."
+fi
 
-# Create PostGIS datastore pointing to 'db' service
+# Create or update PostGIS datastore
 cat > /tmp/pg_ds.xml <<EOF
 <dataStore>
-  <name>pg_places</name>
+  <name>pg_data</name>
   <enabled>true</enabled>
   <connectionParameters>
     <entry key="host">db</entry>
@@ -37,76 +43,139 @@ cat > /tmp/pg_ds.xml <<EOF
 </dataStore>
 EOF
 
-echo "Creating PostGIS datastore..."
-curl -sf -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+echo "Creating/Updating PostGIS datastore 'pg_data'..."
+curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
   -d @/tmp/pg_ds.xml \
-  -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores"
+  -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores" 2>/dev/null || \
+curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+  -d @/tmp/pg_ds.xml \
+  -X PUT "$GEOSERVER_URL/rest/workspaces/uebung/datastores/pg_data"
 
-# Publish 'places' layer from PostGIS as WFS/WMS
-cat > /tmp/featuretype.json <<EOF
-{
-  "featureType": {
-    "name": "places",
-    "nativeName": "places",
-    "srs": "EPSG:4326"
-  }
-}
-EOF
+# Get list of all tables from PostGIS (auto-publishes as WMS + WFS)
+echo "Querying PostGIS for available tables..."
+TABLES=$(PGPASSWORD=postgres psql -h db -U postgres -d postgres -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name NOT IN ('spatial_ref_sys', 'geography_columns', 'geometry_columns', 'raster_columns', 'raster_overviews') ORDER BY table_name;" 2>/dev/null)
 
-echo "Publishing PostGIS layer 'places'..."
-curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/json" \
-  -d @/tmp/featuretype.json \
-  -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores/pg_places/featuretypes"
+if [ -z "$TABLES" ]; then
+  echo "⚠️  No tables found in PostGIS or database query failed."
+  echo "Please check: 1) Database is running, 2) Tables exist, 3) psql is available"
+  exit 1
+fi
 
-# If a 'points' table exists in PostGIS (e.g., imported from GeoJSON), publish it too
-cat > /tmp/points_ft.json <<EOF
-{
-  "featureType": {
-    "name": "points",
-    "nativeName": "points",
-    "srs": "EPSG:4326"
-  }
-}
-EOF
-echo "Attempting to publish PostGIS layer 'points' (if table exists)..."
-curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/json" \
-  -d @/tmp/points_ft.json \
-  -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores/pg_places/featuretypes" || true
+echo "Found user tables: $TABLES"
 
-# Auto-publish all GeoTIFFs (*.tif, *.tiff) as WMS, using filename as store/layer name
-for f in /data/*.tif /data/*.tiff; do
-  [ -e "$f" ] || continue
-  name=$(basename "$f")
-  name=${name%.*}
-  echo "Publishing GeoTIFF '$name' from $f..."
-  curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: text/plain" \
-    -d "file://$f" \
-    -X PUT "$GEOSERVER_URL/rest/workspaces/uebung/coveragestores/$name/external.geotiff?configure=all" || true
+# Publish each table as feature type (GeoServer auto-enables both WMS + WFS)
+echo "Publishing PostGIS tables..."
+echo "$TABLES" | while read table_name; do
+  [ -z "$table_name" ] && continue
+  
+  if ! curl -sf -u "$ADMIN_USER:$ADMIN_PASS" "$GEOSERVER_URL/rest/workspaces/uebung/datastores/pg_data/featuretypes/${table_name}.json" >/dev/null 2>&1; then
+    echo "Publishing table '${table_name}'..."
+    
+    # Create feature type - GeoServer will auto-calculate bounds and enable both WMS/WFS
+    cat > /tmp/featuretype_${table_name}.xml <<EOFFT
+<featureType>
+  <name>${table_name}</name>
+  <nativeName>${table_name}</nativeName>
+  <srs>EPSG:4326</srs>
+  <enabled>true</enabled>
+</featureType>
+EOFFT
+    
+    RESPONSE=$(curl -s -w "\\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+      -d @/tmp/featuretype_${table_name}.xml \
+      -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores/pg_data/featuretypes" 2>&1)
+    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+    
+    if [ "$HTTP_CODE" = "201" ]; then
+      echo "  ✓ Layer '${table_name}' published (WMS + WFS)."
+    else
+      echo "  ✗ Failed to publish '${table_name}' (HTTP $HTTP_CODE)"
+      echo "$RESPONSE" | head -n -1
+    fi
+  else
+    echo "Layer '${table_name}' already exists, skipping."
+  fi
 done
 
-# Auto-publish all GeoJSONs (*.geojson) as WFS, using filename as store/layer name
-for f in /data/*.geojson; do
-  [ -e "$f" ] || continue
-  name=$(basename "$f")
-  name=${name%.*}
-  echo "Creating GeoJSON datastore '$name' from $f..."
-  curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/json" \
-    -d '{"dataStore": {"name": "'"$name"'", "type": "GeoJSON", "enabled": true, "connectionParameters": {"url": "file:'"$f"'"}}}' \
-    -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores" || true
+# Auto-publish all GeoTIFFs as WMS raster layers
+echo "\\n--- Publishing GeoTIFF Raster Images ---"
 
-  cat > /tmp/${name}_ft.json <<EOFJSON
-{
-  "featureType": {
-    "name": "${name}",
-    "nativeName": "${name}",
-    "srs": "EPSG:4326"
-  }
-}
-EOFJSON
-  echo "Publishing GeoJSON layer '${name}'..."
-  curl -s -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/json" \
-    -d @/tmp/${name}_ft.json \
-    -X POST "$GEOSERVER_URL/rest/workspaces/uebung/datastores/${name}/featuretypes" || true
-done
+# Find all TIF files using find command directly
+if [ -d "/data" ]; then
+  find /data -maxdepth 1 \( -name "*.tif" -o -name "*.tiff" -o -name "*.TIF" -o -name "*.TIFF" \) -type f | while read filepath; do
+    [ -z "$filepath" ] && continue
+    
+    filename=$(basename "$filepath")
+    name=$(echo "$filename" | sed 's/\.[^.]*$//')
+    
+    echo "Publishing GeoTIFF '$name' from '$filepath' as WMS..."
+    
+    # Create coverage store for this GeoTIFF if it doesn't exist
+    if ! curl -sf -u "$ADMIN_USER:$ADMIN_PASS" "$GEOSERVER_URL/rest/workspaces/uebung/coveragestores/${name}.json" >/dev/null 2>&1; then
+      cat > /tmp/coverage_store_${name}.xml <<EOFCS
+<coverageStore>
+  <name>${name}</name>
+  <enabled>true</enabled>
+  <workspace>
+    <name>uebung</name>
+  </workspace>
+  <type>GeoTIFF</type>
+  <url>file://${filepath}</url>
+</coverageStore>
+EOFCS
+      
+      RESPONSE=$(curl -s -w "\\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+        -d @/tmp/coverage_store_${name}.xml \
+        -X POST "$GEOSERVER_URL/rest/workspaces/uebung/coveragestores" 2>&1)
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+      
+      if [ "$HTTP_CODE" = "201" ]; then
+        echo "  ✓ Coverage store '${name}' created."
+      else
+        echo "  ✗ Failed to create coverage store '${name}' (HTTP $HTTP_CODE)"
+        echo "$RESPONSE" | head -n -1
+        continue
+      fi
+    else
+      echo "  Coverage store '${name}' already exists."
+    fi
+    
+    # Wait for store to be fully initialized
+    sleep 2
+    
+    # Create coverage (layer) for this GeoTIFF if it doesn't exist
+    if ! curl -sf -u "$ADMIN_USER:$ADMIN_PASS" "$GEOSERVER_URL/rest/workspaces/uebung/coveragestores/${name}/coverages/${name}.json" >/dev/null 2>&1; then
+      cat > /tmp/coverage_${name}.xml <<EOFCOV
+<coverage>
+  <name>${name}</name>
+  <enabled>true</enabled>
+</coverage>
+EOFCOV
+      
+      RESPONSE=$(curl -s -w "\\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -H "Content-type: application/xml" \
+        -d @/tmp/coverage_${name}.xml \
+        -X POST "$GEOSERVER_URL/rest/workspaces/uebung/coveragestores/${name}/coverages" 2>&1)
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+      
+      if [ "$HTTP_CODE" = "201" ]; then
+        echo "  ✓ WMS layer '${name}' created from GeoTIFF."
+      else
+        echo "  ✗ Failed to create WMS layer '${name}' (HTTP $HTTP_CODE)"
+        echo "$RESPONSE" | head -n -1
+      fi
+    else
+      echo "  WMS layer '${name}' already exists."
+    fi
+  done
+else
+  echo "  /data directory not found, skipping GeoTIFF publishing."
+fi
 
-echo "GeoServer initialization done."
+# Verify configuration was persisted
+echo "\\nVerifying published layers..."
+sleep 2
+
+LAYER_COUNT=$(curl -s -u "$ADMIN_USER:$ADMIN_PASS" "$GEOSERVER_URL/rest/layers.json" 2>/dev/null | grep -o '"name"' | wc -l || echo "0")
+echo "Total layers published: $LAYER_COUNT"
+
+echo "\\n✓ GeoServer initialization complete."
