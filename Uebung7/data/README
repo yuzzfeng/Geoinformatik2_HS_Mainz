@@ -1,0 +1,8 @@
+# Daten für Übung 7
+
+```
+data/
+├── Greater_Tokyo_Area.geojson    # Grenzen der Tokio-Metropolregion
+├── tokyo_clean.csv               # 10.000 Flickr-Fotografien mit Koordinaten
+└── README
+```
