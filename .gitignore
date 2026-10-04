@@ -12,3 +12,6 @@ Uebung11/Interpolation.ipynb
 Uebung12/Data/*.zip
 Uebung12/Data/*.tif
 Uebung12/cache/*
+
+# macOS Finder metadata
+.DS_Store
