@@ -19,13 +19,12 @@
       <div id="cesiumContainer"></div>
 
     <script>
-    // optional: Cesium.Ion.defaultAccessToken = 'XXXX';
-
     // Initialisierung des Cesium-Viewers
     var viewer = new Cesium.Viewer('cesiumContainer',{
      shadows: false,
      geocoder: false,
-     baseLayerPicker: false
+     baseLayerPicker: false,
+     baseLayer: false
     });
 
     // Hintergrundkarte für die Gebiete außerhalb von Deutschland
@@ -49,7 +48,7 @@
 
   // Kamera auf Hochschule Mainz (präziser Punkt) zentrieren
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(8.226646983932763, 49.988427329774865, 1500.0), // Hochschule Mainz 精确坐标
+    destination: Cesium.Cartesian3.fromDegrees(8.226646983932763, 49.988427329774865, 1500.0), // Hochschule Mainz
     orientation: {
       heading: Cesium.Math.toRadians(0.0),
       pitch: Cesium.Math.toRadians(-50.0),
@@ -63,7 +62,7 @@
        'use strict';
        try {
           const tileset = await Cesium.Cesium3DTileset.fromUrl(
-                "https://sg.geodatenzentrum.de/gdz_basemapde_3d_gebaeude/lod2_4978_null.json",
+                "https://sgx.geodatenzentrum.de/gdz_basemapde_3d_gebaeude/lod2_4326_null.json",
                 { showOutline: false }
           );
 
@@ -95,4 +94,4 @@
     }
       </script>
    </body>
-  </html>  
+  </html>
