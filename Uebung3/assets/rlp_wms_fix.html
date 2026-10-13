@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>RLP WMS (61675) 纠错版 - deck.gl + Carto Light</title>
+    <title>RLP WMS (61675) corrected version - deck.gl + Carto Light</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
@@ -24,12 +24,12 @@
     <div id="map"></div>
     <div class="panel">
       <b>RLP DOP20 WMS（layer_id=61675）</b><br/>
-      尝试参数：<code>INSPIRE=1</code>, <code>WMS 1.3.0</code>, <code>CRS=EPSG:4326</code>（bbox: 南,西,北,东）<br/>
-      若仍看不到，极可能是 <b>CORS</b> 限制。请改用同域代理/MapProxy 或服务方开启 CORS。<br/>
-      打开控制台（F12）查看瓦片请求是否 200 / CORS 错误。
+      Parameters to try: <code>INSPIRE=1</code>, <code>WMS 1.3.0</code>, <code>CRS=EPSG:4326</code> (bbox: south,west,north,east)<br/>
+      If nothing appears, <b>CORS</b> restrictions may be the cause. Use a same-origin proxy/MapProxy or ask the service provider to enable CORS.<br/>
+      Open the console (F12) to check tile requests for HTTP 200 responses or CORS errors.
     </div>
     <div class="toolbar">
-      透明度 <input id="op" type="range" min="0" max="1" step="0.05" value="0.8">
+      Opacity <input id="op" type="range" min="0" max="1" step="0.05" value="0.8">
     </div>
     <script>
       const map = new maplibregl.Map({
@@ -42,7 +42,7 @@
       const overlay = new deck.MapboxOverlay({ interleaved:true, layers: [] });
       map.addControl(overlay);
 
-      // 带 INSPIRE=1 的 WMS 基地址（注意保留末尾的 &bbox= ）
+      // WMS base URL with INSPIRE=1 (keep the trailing &bbox=)
       const WMS_BASE =
         'https://www.geoportal.rlp.de/mapbender/php/wms.php' +
         '?INSPIRE=1' +
@@ -63,20 +63,20 @@
         minZoom: 0,
         maxZoom: 19,
         refinementStrategy: 'no-overlap',
-        // 捕捉加载错误
+        // Catch loading errors
         onTileError: (err, tile) => {
           console.warn('Tile error', err, tile && tile.bbox);
         },
         renderSubLayers: (props) => {
           const {west, south, east, north} = props.tile.bbox;
-          // 1.3.0 + EPSG:4326 -> bbox 顺序：南,西,北,东（lat,lon,lat,lon）
+          // 1.3.0 + EPSG:4326 -> bbox order: south,west,north,east (lat,lon,lat,lon)
           const url = `${WMS_BASE}${south},${west},${north},${east}`;
           return new deck.BitmapLayer(props, {
             id: `${props.id}-bmp`,
             bounds: [west, south, east, north],
             image: url,
             opacity: opacity,
-            loadOptions: { image: { crossOrigin: 'anonymous' } } // 尝试 CORS
+            loadOptions: { image: { crossOrigin: 'anonymous' } } // Try CORS
           });
         }
       });

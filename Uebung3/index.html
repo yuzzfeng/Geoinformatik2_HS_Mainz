@@ -9,13 +9,13 @@
     <style>
     /* Color palette: muted green accent, separate light and dark themes */
         :root{
-            --bg: #fafbfd;            /* 浅背景，略带冷色调 */
-            --text: #17202a;          /* 深灰蓝色，易读 */
-            --muted: #57606a;         /* 次要文本 */
-            --card: #ffffff;          /* 卡片白 */
-            --header-bg: linear-gradient(90deg,#2e7d60,#4aa07a); /* 渐变主色 */
-            --accent: #2e7d60;       /* 主色 */
-            --link: #1f6feb;         /* 链接蓝色 */
+            --bg: #fafbfd;            /* Light background with a slightly cool tone */
+            --text: #17202a;          /* Dark blue-gray for readability */
+            --muted: #57606a;         /* Secondary text */
+            --card: #ffffff;          /* White card background */
+            --header-bg: linear-gradient(90deg,#2e7d60,#4aa07a); /* Primary color gradient */
+            --accent: #2e7d60;       /* Primary color */
+            --link: #1f6feb;         /* Blue link color */
             --border: rgba(20,34,45,0.06);
         }
         .dark-theme{
@@ -126,7 +126,7 @@
             transition: all 0.28s cubic-bezier(.4,1.4,.6,1);
             z-index: 2;
         }
-        /* 响应式优化新闻卡片图片 */
+        /* Responsive images for news cards */
         @media (max-width: 900px) {
             #tab-news img[alt] {
                 width: 98vw !important;
@@ -175,7 +175,7 @@
             color: var(--text);
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(20,30,40,0.02); /* 极弱化阴影 */
+            box-shadow: 0 2px 6px rgba(20,30,40,0.02); /* Very subtle shadow */
         }
         thead th{
             background: transparent;
@@ -196,7 +196,7 @@
             background: rgba(255,255,255,0.0);
         }
         tbody tr:nth-child(even){
-            background: rgba(30,50,60,0.01); /* 透明度再减半，极低对比 */
+            background: rgba(30,50,60,0.01); /* Halved opacity for very low contrast */
         }
         tbody tr:last-child td{border-bottom:none}
         /* Dark theme adjustments (weakened contrast) */
@@ -251,7 +251,7 @@
         .dark-theme .theme-toggle{ background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); color:var(--text); }
         /* soften table borders in dark theme */
         .dark-theme table, .dark-theme th, .dark-theme td{ border-color: rgba(255,255,255,0.06) }
-        /* header 中的 tab 样式 */
+        /* Tab styles in the header */
         .tab-buttons{display:inline-flex;gap:0.4rem}
         .tab-btn{background:transparent;border:none;padding:8px 12px;border-radius:8px;color:var(--text);cursor:pointer;font-weight:600}
         .tab-btn[aria-selected="true"], .tab-btn.active{background:rgba(255,255,255,0.06);box-shadow:0 6px 18px rgba(20,30,40,0.06)}
@@ -296,7 +296,7 @@
                             </p>
                         </div>
                         <div style="width:320px;flex-shrink:0;text-align:center;">
-                            <img src="https://raw.githubusercontent.com/yuzzfeng/hugo-theme-console/refs/heads/master/images/ikg_homepage_feng.jpg" alt="头像" style="width:280px;max-width:100%;height:auto;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+                            <img src="https://raw.githubusercontent.com/yuzzfeng/hugo-theme-console/refs/heads/master/images/ikg_homepage_feng.jpg" alt="Profile photo" style="width:280px;max-width:100%;height:auto;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
                         </div>
                     </div>
 
@@ -451,7 +451,7 @@
                 if (!res.ok) throw new Error('Failed to load news');
                 const data = await res.json();
                 const list = data.slice(0,5).map(item => {
-                    // 左侧大图，右侧内容
+                    // Large image on the left, content on the right
                     const img = item.image ? `<img src="${item.image}" alt="" style="width:480px;max-width:100vw;height:320px;object-fit:cover;border-radius:0.7em;box-shadow:0 2px 16px #0002;">` : '<div style="width:480px;max-width:100vw;height:320px;display:flex;align-items:center;justify-content:center;background:#f3f3f3;border-radius:0.7em;">📰</div>';
                     return `
                     <article style="display:flex;gap:2.5rem;align-items:flex-start;margin-bottom:2.7rem;flex-wrap:wrap;">
