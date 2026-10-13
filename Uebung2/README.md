@@ -15,6 +15,8 @@ In dieser Aufgabe soll die Webseite optisch modernisiert werden.
 
 - Dazu gehören ein **Light/Night Mode**, der durch einen einfachen Klick auf einen Button gewechselt werden kann, sowie animierte Tabs und ein responsives Layout mit moderner Karten- und Tab-Gestaltung.
 
+- **CSS verstehen**: Identifizieren Sie selbstständig die geänderten CSS-Regeln und versuchen Sie zu verstehen, wie diese die Gestaltung umsetzen.
+
 ---
 
 ### Aufgabe 2 – Seitenstruktur mit Tabs  
@@ -25,7 +27,7 @@ Alle Informationen sind derzeit noch vermischt dargestellt. Um die Inhalte klare
 - **News**: Informationen über aktuelle Ereignisse.  
 - **Projects**: Präsentation eigener Web-Maps oder Webseiten.  
 
-Jeder Bereich erhält einen eigenen Tab, sodass die Inhalte übersichtlich und voneinander getrennt dargestellt werden können.  
+Die Tabs können entweder zu den jeweiligen Abschnitten einer langen Seite führen oder nur den ausgewählten Bereich anzeigen.
 
 ---
 
@@ -36,6 +38,7 @@ Wir möchten die neuesten Nachrichten mit den Leserinnen und Lesern teilen, doch
 - **Automatisches Einlesen**: Die Daten werden mit JavaScript aus der JSON-Datei übernommen.  
 - **Strukturierte Darstellung**: Jede News erscheint mit Bild, Titel, Datum und Kurztext.  
 - **Einfache Erweiterung**: Neue Meldungen können direkt in der JSON-Datei ergänzt werden.  
+- Ersetzen Sie die News aus der Vorlage durch zwei bis drei eigene neue Meldungen in `assets/news.json`.
 
 So bleibt die Webseite aktuell, ohne dass das HTML bei jeder Änderung bearbeitet werden muss.  
 
@@ -43,11 +46,15 @@ So bleibt die Webseite aktuell, ohne dass das HTML bei jeder Änderung bearbeite
 
 ### Aufgabe 4 – Kontakt und externe Links
 
-Um die Seite professioneller und benutzerfreundlicher zu gestalten, soll ein kleiner Kontaktbereich integriert werden. Platziere dazu in der rechten unteren Ecke der Seite zwei bis drei Logos (z. B. LinkedIn, GitHub oder E-Mail), die auf externe Webseiten verlinken.
+Um die Seite professioneller und benutzerfreundlicher zu gestalten, soll ein kleiner Kontaktbereich integriert werden. Platziere dazu zwei bis drei Logos (z. B. LinkedIn, GitHub oder E-Mail), die auf externe Webseiten verlinken.
+
+- Die Logos müssen mit `position: fixed` unten rechts im Browserfenster fixiert sein und auch beim Scrollen dort bleiben.
 
 ---
 
 ### Aufgabe 5 – Veröffentlichung (Zugriff für die/den Dozent*in sicherstellen)
+
+Passen Sie vor der Veröffentlichung Layout und Farben nach Ihrem Geschmack an.
 
 Stelle sicher, dass deine Seite **öffentlich erreichbar** ist, damit die/der Dozent*in sie prüfen kann. Empfohlene Wege:  
 - **GitHub Pages** aktivieren (Settings → Pages) und die bereitgestellte URL in das README eintragen.  
@@ -69,7 +76,7 @@ Zum Abschluss reflektieren Sie den Aufbau deines Codes anhand einiger Fragen.
 
 ## Live-URL
 Bitte hier die öffentlich erreichbare URL eintragen (GitHub Pages oder Netlify):  
-OLAT -> Geoinformatik 2 WiSe 2025/2026 -> Übungsabgabe -> Uebung 1-3 - Link
+OLAT -> Geoinformatik 2 -> Übungsabgabe -> Uebung 1-3 - Link
 
 ---
 
