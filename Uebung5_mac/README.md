@@ -76,7 +76,7 @@ docker compose build --no-cache
 # Services starten
 docker compose up -d
 
-# Status prüfen (alle Services sollten "healthy" sein)
+# Status prüfen (Init- und Import-Container enden erfolgreich mit Exit 0)
 docker compose ps
 ```
 
@@ -199,10 +199,17 @@ docker compose run --rm gdal-import
 2. **OSM-Datenpunkte (z.B. Café, Restaurant) herunterladen, als GeoJSON konvertieren und publizieren:**
    - Nutzen Sie Overpass Turbo (https://overpass-turbo.eu/) oder eine andere OSM-API, um relevante POIs (z.B. Café, Restaurant) für Ihre Region als GeoJSON zu exportieren.
    - Speichern Sie die GeoJSON-Datei in `geodata/` und publizieren Sie sie als WFS-Layer:
-     - Variante A: Automatischer Import durch gdal-import (falls aktiviert).
-     - Variante B: Manuell importieren:
-       
-       docker compose run --rm gdal-import
+     Führen Sie zuerst den Import und danach die Veröffentlichung aus (macOS und Windows):
+
+     ```bash
+     docker compose run --rm gdal-import
+     docker compose run --rm --no-deps geoserver-init
+     ```
+
+     Das Initialisierungsskript veröffentlicht automatisch alle Tabellen mit Geometriespalten
+     im Schema `public`, z.B. `cafes` und `restaurants`. Bereits veröffentlichte Layer werden
+     übersprungen. Neue Installationen verwenden den Datastore `pg_data`; ein vorhandener
+     Datastore `pg_places` aus der älteren Windows-Version wird weiterverwendet.
    - Prüfen: Layer-Preview in GeoServer sollte einen neuen WFS-Layer (z.B. `uebung:cafes` oder `uebung:restaurants`) anzeigen.
    - **Leaflet:** Fügen Sie diesen neuen WFS-Layer als vierten Layer in die Webkarte ein.
 
@@ -225,3 +232,32 @@ den Link zu Ihrem Repository ab.
 - Integration von Raster (GeoTIFF) und Vektor (GeoJSON/PostGIS) in einer Webkarte
 
 
+
+## Mainz-Layer prüfen
+
+Die separat bereitgestellte Datei muss vor dem Start unter `geodata/mainz.tif` liegen.
+`geoserver-init` wartet auf den GeoJSON-Import und prüft anschließend, ob `uebung:mainz`
+aktiviert ist und eine WMS-GetMap-Anfrage über den Rasterbereich ein PNG liefert.
+Erst nach erfolgreicher Prüfung startet `web`. Bei Fehlern endet die Initialisierung
+mit einem Fehlercode; die Logs enthalten die Ursache.
+
+```bash
+docker compose logs geoserver-init
+docker compose ps -a
+```
+
+Nach einer Korrektur die Initialisierung erneut ausführen und danach die Webseite starten:
+
+```bash
+docker compose up -d --build
+```
+
+Nur die Prüfung erneut ausführen (ohne Layer zu verändern):
+
+```bash
+docker compose run --rm --no-deps --entrypoint python3 geoserver-init /app/verify_mainz.py
+```
+
+Erwartete Meldung: `Verified: uebung:mainz is enabled and WMS GetMap returns a PNG.`
+Diese Prüfung bestätigt die technische Ausgabe; die sichtbare Kartendarstellung
+wird anschließend im Browser kontrolliert.

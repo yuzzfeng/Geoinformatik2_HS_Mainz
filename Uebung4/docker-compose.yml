@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     platform: linux/amd64
@@ -31,7 +30,7 @@ services:
       FLASK_APP: app.py
       FLASK_ENV: development
     ports:
-      - "5000:5000"
+      - "5001:5000"
     command: python app.py
     working_dir: /app
 

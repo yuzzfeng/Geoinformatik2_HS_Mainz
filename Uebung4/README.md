@@ -224,7 +224,7 @@ services:
       FLASK_APP: app.py
       FLASK_ENV: development
     ports:
-      - "5000:5000"
+      - "5001:5000"
     command: python app.py
     working_dir: /app
 
@@ -255,9 +255,11 @@ docker compose ps
 > - Fragen Sie **GitHub Copilot** oder **ChatGPT** mit der Fehlermeldung
 > - Die KI kann oft schnell die Ursache identifizieren und eine Lösung vorschlagen
 
+Der Host-Port `5001` wird auf den Flask-Port `5000` im Container weitergeleitet. So vermeiden wir Konflikte mit dem AirPlay Receiver auf macOS; `app.py` bleibt unverändert.
+
 **Ergebnis testen:**
-- Browser: `http://localhost:5000/` → Startseite  
-- API: `http://localhost:5000/api/places` → JSON mit Beijing & Shanghai  
+- Browser: `http://localhost:5001/` → Startseite
+- API: `http://localhost:5001/api/places` → JSON mit Beijing & Shanghai
 
 ---
 

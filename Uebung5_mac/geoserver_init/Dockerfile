@@ -1,14 +1,12 @@
 FROM curlimages/curl:8.10.1
 
-# Kopiere das Initialisierungs-Skript in das Image
 COPY init_geoserver.sh /app/init_geoserver.sh
+COPY verify_mainz.py /app/verify_mainz.py
 
-# Setze ausführbare Rechte
 USER root
-RUN apk add --no-cache postgresql-client
-RUN chmod +x /app/init_geoserver.sh
-
-# Wechsel zurück zum curl-Benutzer
+RUN apk add --no-cache python3 postgresql-client
+# Normalize Windows line endings for both host platforms.
+RUN chmod +x /app/init_geoserver.sh && sed -i 's/\r$//' /app/init_geoserver.sh
 USER curl_user
 
 ENTRYPOINT ["/bin/sh", "/app/init_geoserver.sh"]

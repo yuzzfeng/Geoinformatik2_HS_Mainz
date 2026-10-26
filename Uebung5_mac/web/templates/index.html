@@ -110,6 +110,7 @@
             format: 'image/png', 
             transparent: true 
           });
+          if (fullLayerName === 'uebung:mainz') wmsAuto.addTo(map);
           layersControl.addOverlay(wmsAuto, `🖼️ WMS - ${lyrName}`);
         });
         
