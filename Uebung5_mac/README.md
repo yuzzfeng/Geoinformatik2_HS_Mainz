@@ -16,11 +16,11 @@ Nach dieser Übung können Sie:
 Diese Übung baut auf **Übung 4** (Flask + PostGIS) auf und erweitert das System um einen **GeoServer** zur professionellen Geodaten-Publikation:
 
 ### Architektur (5 Services)
-1. **db** (PostGIS): Datenbank für Vektordaten  
-2. **web** (Flask): Web-Anwendung mit interaktiver Karte  
-3. **geoserver** (Kartoza GeoServer): OGC-konformer Map-Server  
-4. **geoserver-init**: Automatische GeoServer-Konfiguration via REST-API  
-5. **gdal-import**: Automatischer Import von GeoJSON nach PostGIS  
+1. **db** (PostGIS): Datenbank für Vektordaten
+2. **web** (Flask): Web-Anwendung mit interaktiver Karte
+3. **geoserver** (Kartoza GeoServer): OGC-konformer Map-Server
+4. **geoserver-init**: Automatische GeoServer-Konfiguration via REST-API
+5. **gdal-import**: Automatischer Import von GeoJSON nach PostGIS
 
 ### Geodaten-Pipeline
 ```
@@ -29,8 +29,8 @@ GeoJSON (points.geojson)  →  PostGIS  →  GeoServer  →  WFS  →  Leaflet
 ```
 
 ### Was wird publiziert?
-- **WMS-Layer**: `uebung:mainz` (Raster-Basiskarte aus GeoTIFF)  
-- **WFS-Layer**: `uebung:points` (Interaktive Punkte aus PostGIS: Mainz, Wiesbaden, Frankfurt)  
+- **WMS-Layer**: `uebung:mainz` (Raster-Basiskarte aus GeoTIFF)
+- **WFS-Layer**: `uebung:points` (Interaktive Punkte aus PostGIS: Mainz, Wiesbaden, Frankfurt)
 - **Datenbank-Test**: `places`-Tabelle (Beijing, Shanghai) für Verbindungsprüfung
 
 ---
@@ -38,7 +38,7 @@ GeoJSON (points.geojson)  →  PostGIS  →  GeoServer  →  WFS  →  Leaflet
 ## Schritt 1 · Projektstruktur verstehen
 
 ```
-Uebung5/
+Uebung5_mac/
 ├─ docker-compose.yml          # Orchestrierung aller Services
 ├─ db/
 │   ├─ Dockerfile               # PostGIS mit Init-Skripten
@@ -50,7 +50,8 @@ Uebung5/
 │   └─ points.geojson           # Vektordaten (werden in PostGIS importiert)
 ├─ geoserver_init/
 │   ├─ Dockerfile               # Image für GeoServer-Konfiguration
-│   └─ init_geoserver.sh        # REST-API-Skript: Workspace, Datastore, Layer
+│   ├─ init_geoserver.sh        # REST-API-Skript: Workspace, Datastore, Layer
+│   └─ verify_mainz.py          # Prüft Mainz und ein echtes WMS-Bild
 ├─ scripts/
 │   ├─ Dockerfile               # GDAL-Image mit eingebettetem Import-Skript
 │   └─ import_geojson.sh        # ogr2ogr: GeoJSON → PostGIS
@@ -61,33 +62,46 @@ Uebung5/
 
 ---
 
+## Vor dem Start
+
+- Docker Desktop muss laufen; unter Windows Linux-Container verwenden.
+- Die separat bereitgestellte `mainz.tif` nach `geodata/mainz.tif` kopieren.
+  Bei Cloud-Synchronisation müssen alle Dateien vollständig lokal verfügbar sein.
+- Docker Desktop muss auf den Übungsordner zugreifen dürfen: **Settings → Resources → File sharing**.
+  Bei `Operation not permitted` zuerst diese Freigabe prüfen.
+- Übung 4 und die jeweils andere Übung-5-Version vorher stoppen (`docker compose stop`
+  im jeweiligen Verzeichnis). Die Projekte verwenden dieselben Host-Ports.
+- Ports: Webseite `5001`, GeoServer `8080`, PostGIS `5432`. Der Container verwendet intern
+  weiterhin Flask-Port `5000`; Host-Port `5001` vermeidet den üblichen AirPlay-Konflikt.
+- Für den ersten Image-Download sowie Leaflet und die OSM-Grundkarte ist Internet nötig.
+
 ## Schritt 2 · Container starten
 
 ```bash
-# In Uebung5/ Verzeichnis
-cd Uebung5/
+# In Uebung5_mac/ Verzeichnis
+cd Uebung5_mac/
 
 # ⚠️ Nur bei Problemen: Alles löschen und von vorne beginnen (inkl. Datenbank-Daten!)
 # docker compose down -v --remove-orphans
 
 # Alle Images bauen
-docker compose build --no-cache
+docker compose build
 
 # Services starten
 docker compose up -d
 
 # Status prüfen (Init- und Import-Container enden erfolgreich mit Exit 0)
-docker compose ps
+docker compose ps -a
 ```
 
-**Wichtig:** Beim ersten Start kann es 1-2 Minuten dauern, bis GeoServer vollständig initialisiert ist.
+**Wichtig:** Der erste Start kann mehrere Minuten dauern. `gdal-import` und `geoserver-init` müssen mit `Exited (0)` enden. Erst danach startet die Webseite. Details: `docker compose logs gdal-import geoserver-init`.
 
 ---
 
 ## Schritt 3 · Funktionen testen
 
 ### 1. Flask-Webseite
-**URL:** http://localhost:5000/
+**URL:** http://localhost:5001/
 
 **Erwartung:**
 - Oben: Tabelle mit `places`-Daten (Beijing, Shanghai) → Datenbankverbindung OK ✅
@@ -97,13 +111,13 @@ docker compose ps
   - WFS-Layer: `uebung:points` (klickbare Punkte: Mainz, Wiesbaden, Frankfurt)
 
 ### 2. GeoServer Admin-Panel
-**URL:** http://localhost:8080/geoserver/  
+**URL:** http://localhost:8080/geoserver/
 **Login:** `admin` / `geoserver`
 
 **Prüfen Sie:**
 - **Layer Preview** → `uebung:mainz` (WMS) und `uebung:points` (WFS)
 - **Workspaces** → Workspace `uebung` existiert
-- **Stores** → PostGIS-Datastore `pg_places` verbunden
+- **Stores** → PostGIS-Datastore `pg_data` verbunden (bei älteren Installationen `pg_places`)
 
 ### 3. WMS GetCapabilities
 **URL:** http://localhost:8080/geoserver/uebung/wms?service=WMS&request=GetCapabilities
@@ -123,10 +137,9 @@ docker compose ps
 Das `init_geoserver.sh`-Skript läuft einmalig nach GeoServer-Start und führt automatisch aus:
 
 1. **Workspace erstellen:** `uebung`
-2. **PostGIS-Datastore erstellen:** `pg_places` (Verbindung zu `db:5432/postgres`)
+2. **PostGIS-Datastore erstellen:** `pg_data` (bestehendes `pg_places` wird weiterverwendet) (Verbindung zu `db:5432/postgres`)
 3. **Layer publizieren:**
-   - `places` (aus PostGIS-Tabelle)
-   - `points` (falls in PostGIS vorhanden)
+   - Alle Tabellen mit Geometriespalten im Schema `public`, z.B. `places`, `points`, `cafes`
 4. **GeoTIFF auto-publizieren:** Alle `*.tif` in `/data/` (z.B. `mainz.tif`) werden als WMS CoverageStore angelegt
 
 **REST-API Beispiel (Workspace):**
@@ -136,14 +149,16 @@ curl -u admin:geoserver -H "Content-type: application/xml" \
   -X POST http://localhost:8080/geoserver/rest/workspaces
 ```
 
-### GeoJSON-Import (`gdal-import`, optional)
-Falls `points.geojson` noch nicht in PostGIS ist, importiert das `import_geojson.sh`-Skript automatisch:
+### GeoJSON-Import (`gdal-import`)
+Das Skript importiert alle `*.geojson` aus `/data`. Dateinamen bestimmen die Tabellennamen.
+Bei erneutem Import werden vorhandene Tabellen durch die Dateiinhalte ersetzt (`-overwrite`).
+Das folgende Beispiel zeigt den Import innerhalb des Import-Containers:
 
 ```bash
 ogr2ogr -f PostgreSQL \
   PG:"host=db user=postgres password=postgres dbname=postgres" \
   /data/points.geojson \
-  -nln points -t_srs EPSG:4326
+  -nln points -lco GEOMETRY_NAME=geom -t_srs EPSG:4326 -overwrite
 ```
 
 ---
@@ -157,7 +172,7 @@ ogr2ogr -f PostgreSQL \
 docker compose logs geoserver
 
 # Init-Skript nochmal ausführen
-docker compose run --rm geoserver-init
+docker compose run --rm --no-deps geoserver-init
 ```
 
 ### Problem: WFS liefert keine Daten
@@ -170,6 +185,7 @@ docker compose exec db psql -U postgres -d postgres -c 'SELECT * FROM points;'
 **Falls Tabelle fehlt:**
 ```bash
 docker compose run --rm gdal-import
+docker compose run --rm --no-deps geoserver-init
 ```
 
 ---
@@ -187,14 +203,15 @@ docker compose run --rm gdal-import
 1. **Neues Raster aus GeoPortal RLP herunterladen, konvertieren und publizieren:**
    - Öffnen Sie den INSPIRE-Download-Link des GeoPortal RLP (Beispiel):
      https://www.geoportal.rlp.de/mapbender/plugins/mb_downloadFeedClient.php?url=https%3A%2F%2Fwww.geoportal.rlp.de%2Fmapbender%2Fphp%2Fmod_inspireDownloadFeed.php%3Fid%3D2b009ae4-aa3e-ff21-870b-49846d9561b2%26type%3DSERVICE%26generateFrom%3Dremotelist
-   - Laden Sie eine benachbarte Kachel (z.B. als .zip oder .gml) herunter und konvertieren Sie sie mit GDAL/QGIS zu GeoTIFF (`.tif`).
+   - Laden Sie eine benachbarte Rasterkachel herunter. ZIP-Archive zuerst entpacken; Raster bei Bedarf mit GDAL/QGIS als GeoTIFF (`.tif`) exportieren. Eine GML-Datei ist nicht automatisch ein Raster und kann nicht pauschal in GeoTIFF umgewandelt werden.
    - Speichern Sie die GeoTIFF-Datei in `geodata/` und publizieren Sie sie:
-     - Variante A: Container kurz neu starten (GeoServer erkennt neue Dateien unter `/data`).
-     - Variante B: Initialisierung erneut ausführen:
-       
-       docker compose run --rm geoserver-init
+     ```bash
+     docker compose run --rm --no-deps geoserver-init
+     ```
+
+     Ein Neustart von GeoServer allein veröffentlicht keine neuen Dateien.
    - Prüfen: Layer-Preview in GeoServer sollte einen neuen WMS-Layer (z.B. `uebung:<dateiname>`) anzeigen.
-   - **Leaflet:** Fügen Sie diesen neuen WMS-Layer als dritten Layer in die Webkarte ein.
+   - **Leaflet:** Seite neu laden, den automatisch erkannten WMS-Layer im Kartenmenü aktivieren und zum Datenbereich navigieren.
 
 2. **OSM-Datenpunkte (z.B. Café, Restaurant) herunterladen, als GeoJSON konvertieren und publizieren:**
    - Nutzen Sie Overpass Turbo (https://overpass-turbo.eu/) oder eine andere OSM-API, um relevante POIs (z.B. Café, Restaurant) für Ihre Region als GeoJSON zu exportieren.
@@ -211,7 +228,7 @@ docker compose run --rm gdal-import
      übersprungen. Neue Installationen verwenden den Datastore `pg_data`; ein vorhandener
      Datastore `pg_places` aus der älteren Windows-Version wird weiterverwendet.
    - Prüfen: Layer-Preview in GeoServer sollte einen neuen WFS-Layer (z.B. `uebung:cafes` oder `uebung:restaurants`) anzeigen.
-   - **Leaflet:** Fügen Sie diesen neuen WFS-Layer als vierten Layer in die Webkarte ein.
+   - **Leaflet:** Seite neu laden und den automatisch erkannten WFS-Layer im Kartenmenü aktivieren. Passen Sie anschließend die Markerfarbe oder Popup-Darstellung im HTML an.
 
 
 ## Übung 4–6 – Abgabe
@@ -221,7 +238,7 @@ docker compose run --rm gdal-import
 - Laden Sie den Screenshot in Ihr GitHub-Repository hoch.
 
 - Geben Sie in OLAT unter
-Geoinformatik 2 WiSe 2025/2026 → Übungsabgabe → Uebung 4–6 – Link
+Geoinformatik 2 (aktueller Kurs) → Übungsabgabe → Uebung 4–6 – Link
 den Link zu Ihrem Repository ab.
 
 ---
@@ -261,3 +278,16 @@ docker compose run --rm --no-deps --entrypoint python3 geoserver-init /app/verif
 Erwartete Meldung: `Verified: uebung:mainz is enabled and WMS GetMap returns a PNG.`
 Diese Prüfung bestätigt die technische Ausgabe; die sichtbare Kartendarstellung
 wird anschließend im Browser kontrolliert.
+
+## Änderungen an der Webseite
+
+HTML-Dateien werden beim Build ins Image kopiert. Nach Änderungen:
+
+```bash
+docker compose up -d --build --no-deps web
+```
+
+Danach die Browserseite neu laden. Die Karte startet immer im Raum Mainz;
+zusätzliche Layer verändern den Kartenausschnitt nicht automatisch.
+Für neue Datendateien einfache Namen verwenden, z.B. `cafes.geojson` oder `raster_west.tif`
+(Kleinbuchstaben, Ziffern, Unterstrich; mit einem Buchstaben beginnen).

@@ -12,12 +12,13 @@
   </style>
 </head>
 <body>
-  <h1>✅ Dienste laufen</h1>
-  <p>Wenn die Tabelle unten Daten anzeigt, funktioniert die Datenbank-Verbindung:</p>
+  <h1>✅ Service is running</h1>
+  <p>If the table below shows data from the database, the connection is OK:</p>
   <div id="out">Loading...</div>
 
   <h2 style="margin-top:28px">🗺️ GeoServer WMS + WFS Vorschau</h2>
-  <p class="hint">WMS liefert gerenderte Kartenkacheln; WFS lädt GeoJSON-Features für Interaktion.</p>
+  <p class="hint">Raster-Daten (wie mainz.tif) über WMS; Vektor-Daten (PostGIS: points, places) über WFS.</p>
+  <p id="map-status" role="status">Layer werden geladen …</p>
   <div id="map"></div>
 
   <script>
@@ -61,66 +62,97 @@
       layers: [osm]
     });
 
-    // GeoServer WMS Layer (Workspace: uebung)
+  // GeoServer WMS Layer (Workspace: uebung)
     const WMS_URL = 'http://localhost:8080/geoserver/uebung/wms';
-    
-    // Zeigt den Rasterlayer 'mainz'
-    const wmsMainz = L.tileLayer.wms(WMS_URL, {
-      layers: 'uebung:mainz',
-      format: 'image/png',
-      transparent: true
-    });
-    wmsMainz.addTo(map);
 
-    // Layer-Steuerung
+  // Layer-Steuerung (Initialize, then automatically add all discovered layers)
     const layersControl = L.control.layers(
       { 'OpenStreetMap': osm },
-      { 'WMS (mainz)': wmsMainz }
+      {}
     ).addTo(map);
 
-    // Automatische Erkennung zusätzlicher WMS-Layer aus GetCapabilities (ausgenommen 'mainz' und 'places')
-    (async () => {
-      try {
-        const capsUrl = WMS_URL + '?service=WMS&request=GetCapabilities';
-        const resp = await fetch(capsUrl);
-        if (!resp.ok) throw new Error('Capabilities HTTP ' + resp.status);
-        const text = await resp.text();
-        const xml = new DOMParser().parseFromString(text, 'application/xml');
-        const names = Array.from(xml.querySelectorAll('Layer > Name')).map(n => n.textContent || '').filter(Boolean);
-        // Nur Workspace 'uebung', ohne 'mainz' und 'places'
-        const candidates = names.filter(n => n.startsWith('uebung:') && n !== 'uebung:mainz' && n !== 'uebung:places');
-        candidates.sort().forEach(lyrName => {
-          const wmsAuto = L.tileLayer.wms(WMS_URL, { layers: lyrName, format: 'image/png', transparent: true });
-          layersControl.addOverlay(wmsAuto, `WMS (${lyrName.replace('uebung:','')})`);
-        });
-      } catch (e) {
-        console.warn('WMS Capabilities konnten nicht gelesen werden oder keine weiteren Layer gefunden:', e);
-      }
-    })();
+    const status = document.getElementById('map-status');
+    const fullName = name => name.includes(':') ? name : `uebung:${name}`;
 
-    // GeoServer WFS (GeoJSON) Overlay: zuerst 'uebung:points' (aus PostGIS) laden, sonst Fallback auf 'uebung:places'
-    function loadWfs(typeName) {
-      const url = `http://localhost:8080/geoserver/uebung/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${encodeURIComponent(typeName)}&outputFormat=application/json`;
-      return fetch(url).then(r => {
-        if (!r.ok) throw new Error('WFS HTTP ' + r.status);
-        return r.json();
-      }).then(geojson => {
-        const lyr = L.geoJSON(geojson, {
-          pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#d33', weight: 2, fillColor: '#f88', fillOpacity: 0.7 }),
-          onEachFeature: (f, layer) => {
-            const props = Object.entries(f.properties || {}).map(([k,v]) => `<div><b>${k}</b>: ${v}</div>`).join('');
-            layer.bindPopup(props || 'No attributes');
+    async function capabilities(url) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const response = await fetch(url, {cache: 'no-store'});
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+          if (xml.querySelector('parsererror, ServiceException, ExceptionText')) {
+            throw new Error('Ungültige Capabilities-Antwort');
           }
-        }).addTo(map);
-        layersControl.addOverlay(lyr, `WFS (${typeName.replace('uebung:','')})`);
-        try { map.fitBounds(lyr.getBounds(), { padding: [20,20] }); } catch {}
-        return lyr;
-      });
+          return xml;
+        } catch (error) {
+          if (attempt === 3) throw error;
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
     }
 
-    loadWfs('uebung:points').catch(() => loadWfs('uebung:places')).catch(err => {
-      console.warn('WFS Laden fehlgeschlagen (weder points noch places verfügbar):', err);
-    });
+    async function loadLayers() {
+      const errors = [];
+      try {
+        const xml = await capabilities(WMS_URL + '?service=WMS&version=1.3.0&request=GetCapabilities');
+        const names = [...new Set(Array.from(xml.querySelectorAll('Layer > Name'),
+          node => node.textContent.trim()).filter(name => name && name !== 'uebung').map(fullName))];
+        if (!names.includes('uebung:mainz')) throw new Error('Mainz wurde noch nicht veröffentlicht');
+        names.sort().forEach(name => {
+          const layer = L.tileLayer.wms(WMS_URL, {layers: name, format: 'image/png', transparent: true});
+          layer.on('tileerror', () => {
+            status.textContent = `WMS-Bild für ${name} konnte nicht geladen werden. GeoServer-Logs prüfen.`;
+          });
+          if (name === 'uebung:mainz') layer.addTo(map);
+          layersControl.addOverlay(layer, `WMS - ${name}`);
+        });
+      } catch (error) {
+        errors.push(`WMS: ${error.message}`);
+      }
+
+      // WFS-Capabilities contain only vector layers; do not request rasters as WFS.
+      try {
+        const wfsUrl = 'http://localhost:8080/geoserver/uebung/ows';
+        const xml = await capabilities(wfsUrl + '?service=WFS&version=2.0.0&request=GetCapabilities');
+        const names = [...new Set(Array.from(xml.getElementsByTagNameNS('*', 'FeatureType'), type =>
+          type.getElementsByTagNameNS('*', 'Name')[0]?.textContent.trim()).filter(Boolean).map(fullName))];
+        await Promise.all(names.map(async name => {
+          try {
+            const query = new URLSearchParams({service: 'WFS', version: '2.0.0', request: 'GetFeature',
+              typeNames: name, outputFormat: 'application/json', srsName: 'EPSG:4326'});
+            const response = await fetch(`${wfsUrl}?${query}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data.features)) throw new Error('Keine FeatureCollection');
+            const layer = L.geoJSON(data, {
+              pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+                radius: 6, color: '#d33', weight: 2, fillColor: '#f88', fillOpacity: 0.7
+              }),
+              onEachFeature: (feature, featureLayer) => {
+                const popup = document.createElement('div');
+                Object.entries(feature.properties || {}).forEach(([key, value]) => {
+                  const row = document.createElement('div');
+                  row.textContent = `${key}: ${value}`;
+                  popup.appendChild(row);
+                });
+                featureLayer.bindPopup(popup);
+              }
+            });
+            // Keep the initial view on Mainz, regardless of request completion order.
+            if (name === 'uebung:points') layer.addTo(map);
+            layersControl.addOverlay(layer, `WFS - ${name}`);
+          } catch (error) {
+            errors.push(`${name}: ${error.message}`);
+          }
+        }));
+      } catch (error) {
+        errors.push(`WFS: ${error.message}`);
+      }
+      if (errors.length) status.textContent = `Nicht alle Layer geladen: ${errors.join('; ')}. Nach der Veröffentlichung die Seite neu laden.`;
+      else if (status.textContent === 'Layer werden geladen …') status.textContent = 'Mainz und points sind aktiviert. Weitere Layer können Sie im Kartenmenü einschalten.';
+    }
+    loadLayers();
+
   </script>
 </body>
 </html>

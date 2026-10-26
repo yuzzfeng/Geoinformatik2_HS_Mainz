@@ -30,12 +30,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
-      FLASK_APP: app.py
-      FLASK_ENV: development
     ports:
-      - "5000:5000"
-    command: python app.py
-    working_dir: /app
+      - "5001:5000"
 
   geoserver:
     image: kartoza/geoserver:2.24.2
