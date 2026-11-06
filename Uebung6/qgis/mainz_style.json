@@ -1,0 +1,272 @@
+{
+  "version": 8,
+  "name": "Mainz Vector Tiles Uebung 6",
+  "sources": {
+    "population": {
+      "type": "vector",
+      "tiles": [
+        "http://localhost:8080/tiles_xyz/population/{z}/{x}/{y}.pbf"
+      ],
+      "minzoom": 8,
+      "maxzoom": 15
+    },
+    "buildings": {
+      "type": "vector",
+      "tiles": [
+        "http://localhost:8080/tiles_xyz/buildings/{z}/{x}/{y}.pbf"
+      ],
+      "minzoom": 13,
+      "maxzoom": 16
+    }
+  },
+  "layers": [
+    {
+      "id": "population-0",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          0
+        ],
+        [
+          "<",
+          "population",
+          10
+        ]
+      ],
+      "paint": {
+        "fill-color": "#ffffcc",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-10",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          10
+        ],
+        [
+          "<",
+          "population",
+          25
+        ]
+      ],
+      "paint": {
+        "fill-color": "#ffeda0",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-25",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          25
+        ],
+        [
+          "<",
+          "population",
+          50
+        ]
+      ],
+      "paint": {
+        "fill-color": "#fed976",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-50",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          50
+        ],
+        [
+          "<",
+          "population",
+          100
+        ]
+      ],
+      "paint": {
+        "fill-color": "#feb24c",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-100",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          100
+        ],
+        [
+          "<",
+          "population",
+          200
+        ]
+      ],
+      "paint": {
+        "fill-color": "#fd8d3c",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-200",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          200
+        ],
+        [
+          "<",
+          "population",
+          400
+        ]
+      ],
+      "paint": {
+        "fill-color": "#e31a1c",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "population-400",
+      "type": "fill",
+      "source": "population",
+      "source-layer": "population",
+      "filter": [
+        "all",
+        [
+          ">=",
+          "population",
+          400
+        ]
+      ],
+      "paint": {
+        "fill-color": "#800026",
+        "fill-opacity": 0.7
+      }
+    },
+    {
+      "id": "buildings-none",
+      "type": "fill",
+      "source": "buildings",
+      "source-layer": "buildings",
+      "filter": [
+        "any",
+        [
+          "!has",
+          "building:levels"
+        ],
+        [
+          "in",
+          "building:levels",
+          "-1",
+          "0",
+          "0.5"
+        ]
+      ],
+      "paint": {
+        "fill-color": "#bdbdbd",
+        "fill-opacity": 0.85,
+        "fill-outline-color": "#ffffff"
+      }
+    },
+    {
+      "id": "buildings-1-2",
+      "type": "fill",
+      "source": "buildings",
+      "source-layer": "buildings",
+      "filter": [
+        "in",
+        "building:levels",
+        "1",
+        "1.3",
+        "1.5",
+        "2"
+      ],
+      "paint": {
+        "fill-color": "#9ecae1",
+        "fill-opacity": 0.85,
+        "fill-outline-color": "#ffffff"
+      }
+    },
+    {
+      "id": "buildings-3-4",
+      "type": "fill",
+      "source": "buildings",
+      "source-layer": "buildings",
+      "filter": [
+        "in",
+        "building:levels",
+        "3",
+        "3.5",
+        "4",
+        "4.5"
+      ],
+      "paint": {
+        "fill-color": "#4292c6",
+        "fill-opacity": 0.85,
+        "fill-outline-color": "#ffffff"
+      }
+    },
+    {
+      "id": "buildings-5+",
+      "type": "fill",
+      "source": "buildings",
+      "source-layer": "buildings",
+      "filter": [
+        "in",
+        "building:levels",
+        "10",
+        "11",
+        "12",
+        "13",
+        "15",
+        "17",
+        "20",
+        "24",
+        "27",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "paint": {
+        "fill-color": "#08519c",
+        "fill-opacity": 0.85,
+        "fill-outline-color": "#ffffff"
+      }
+    }
+  ]
+}

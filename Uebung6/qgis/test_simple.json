@@ -1,0 +1,21 @@
+{
+  "version": 8,
+  "name": "Test ohne Filter",
+  "sources": {
+    "buildings": {"type": "vector", "tiles": ["http://localhost:8080/tiles_xyz/buildings/{z}/{x}/{y}.pbf"], "minzoom": 13, "maxzoom": 16},
+    "population": {"type": "vector", "tiles": ["http://localhost:8080/tiles_xyz/population/{z}/{x}/{y}.pbf"], "minzoom": 8, "maxzoom": 15}
+  },
+  "layers": [
+    {"id": "population", "type": "fill", "source": "population", "source-layer": "population",
+     "paint": {
+       "fill-color": ["step", ["get", "population"],
+         "#ffffcc", 10, "#ffeda0", 25, "#fed976", 50, "#feb24c", 100, "#fd8d3c", 200, "#e31a1c", 400, "#800026"],
+       "fill-opacity": 0.7}},
+    {"id": "buildings", "type": "fill", "source": "buildings", "source-layer": "buildings",
+     "paint": {
+       "fill-color": ["step", ["to-number", ["get", "building:levels"], 0],
+         "#bdbdbd", 1, "#9ecae1", 3, "#4292c6", 5, "#08519c"],
+       "fill-opacity": 0.85,
+       "fill-outline-color": "#ffffff"}}
+  ]
+}

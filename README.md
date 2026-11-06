@@ -17,9 +17,9 @@ Lesen Sie zunächst die Anleitung oder das Übungsnotebook, um sich mit den Lern
 | 3 | Interaktive Webkarten erstellen und in eine Webseite einbinden | 🔗 [Anleitung lesen](Uebung3/README.md) | 🔗 [Beispielkarten erkunden](https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung3/) | [![Übung 3 in Colab öffnen](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yfeng-hsm/Geoinformatik2_HS_Mainz/blob/main/Uebung3/Uebung3_Folium_Student.ipynb) |
 | 4 | Eine Web-GIS-Anwendung mit Docker, Flask und PostGIS aufbauen | 🔗 [Anleitung lesen](Uebung4/README.md) | 🔗 [Screenshot der Anwendung ansehen](Uebung4/assets/Uebung4_output.png) | — |
 | 5 | Geodaten mit GeoServer als WMS und WFS bereitstellen | 🔗 [Anleitung für macOS](Uebung5_mac/README.md) · 🔗 [Anleitung für Windows](Uebung5_win/README.md) | 🔗 [Screenshot der Webkarte ansehen](Uebung5_mac/assets/Uebung5_output.png) | — |
-| 6 | Die Anwendung aus Übung 5 fertigstellen und vertiefen | 🔗 [Anleitung für macOS](Uebung5_mac/README.md) · 🔗 [Anleitung für Windows](Uebung5_win/README.md) | 🔗 [Ergebnis aus Übung 5 ansehen](Uebung5_mac/assets/Uebung5_output.png) | — |
+| 6 | Eigene Vector Tiles ohne Server erstellen und veröffentlichen | 🔗 [Anleitung lesen](Uebung6/README.md) | 🔗 [Beispielkarte ansehen](https://yuzzfeng.github.io/Geoinformatik2_HS_Mainz/Uebung6/) | — |
 
-Übung 6 bietet zusätzliche Zeit, um die Anwendung aus Übung 5 fertigzustellen und Fragen zu klären. Wählen Sie für beide Termine die Anleitung passend zu Ihrem Betriebssystem. Die Vorschauen zu Übung 4–6 sind Screenshots; starten Sie die Anwendungen gemäß der Anleitung auf Ihrem Rechner, um sie selbst auszuprobieren.
+Übung 5 hat separate Anleitungen für macOS und Windows. Übung 6 ist eine eigenständige Übung zu Vector Tiles; die Beispielkarte zeigt die bereitgestellten Musterkacheln. Die Vorschau zu Übung 4 ist ein Screenshot; starten Sie die Anwendung gemäß der Anleitung auf Ihrem Rechner, um sie selbst auszuprobieren.
 
 ### Teil 2 · Räumliche Analyse (Übungen 7–12)
 

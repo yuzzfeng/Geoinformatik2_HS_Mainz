@@ -1,0 +1,16 @@
+services:
+  tippecanoe:
+    build:
+      context: ./tools
+    image: tippecanoe-uebung6
+    working_dir: /work
+    volumes:
+      - .:/work
+    entrypoint: ["tippecanoe"]
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/usr/share/nginx/html:ro
