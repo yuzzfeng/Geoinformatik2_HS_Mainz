@@ -15,9 +15,15 @@
       padding: 8px 12px; border-radius: 4px; font-size: 13px;
       box-shadow: 0 1px 4px rgba(0,0,0,.3);
     }
-    #controls { top: 10px; left: 10px; }
-    #controls label { display: block; margin: 2px 0; cursor: pointer; }
-    #controls hr { margin: 6px 0; }
+    #controls { top: 10px; left: 10px; max-height: calc(100% - 40px); overflow-y: auto; }
+    #controls label { display: flex; align-items: flex-start; gap: 5px; margin: 4px 0; cursor: pointer; }
+    #controls input { margin: 2px 0 0; }
+    #controls input.layer-toggle { appearance: none; width: 14px; height: 14px; flex: 0 0 14px; border: 1px solid #666; border-radius: 50%; background: #fff; }
+    #controls input.layer-toggle:checked { border: 4px solid #2878b5; }
+    #controls label:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+    #controls fieldset { margin: 8px 0 0; padding: 5px 0 0; border: 0; border-top: 1px solid #ccc; }
+    #controls legend { padding: 0; font-weight: 700; }
+    #file-warning { top: 10px; right: 10px; max-width: 340px; }
     #legend { right: 10px; bottom: 30px; }
     .maplibregl-popup-content { max-height: 320px; overflow: hidden; font-size: 12px; }
     table.tags { border-collapse: collapse; }
@@ -31,15 +37,26 @@
   <div id="map"></div>
 
   <div id="controls" class="panel">
-    <b>Tile-Quelle</b>
-    <label><input type="radio" name="quelle" value="pmtiles" checked> PMTiles (eine Datei)</label>
-    <label><input type="radio" name="quelle" value="xyz"> XYZ (<code>z/x/y.pbf</code>)</label>
-    <hr>
-    <b>Ebenen</b>
-    <label><input type="checkbox" id="chk-population" checked> Bevölkerung (100-m-Gitter)</label>
-    <label><input type="checkbox" id="chk-buildings" checked> Gebäude (OSM)</label>
-    <label><input type="checkbox" id="chk-3d"> 3D-Gebäude (Höhe = Etagen × 3 m)</label>
-    <label><input type="checkbox" id="chk-labels" checked> Beschriftung (Hausnummer / Name)</label>
+    <fieldset>
+      <legend>Kachelformat</legend>
+      <label><input type="radio" name="quelle" value="pmtiles" checked> PMTiles (eine Datei)</label>
+      <label><input type="radio" name="quelle" value="xyz"> XYZ (Ordner z/x/y.pbf)</label>
+    </fieldset>
+    <fieldset id="population-controls">
+      <legend>Bevölkerung</legend>
+      <label><input type="checkbox" class="layer-toggle" id="chk-population" checked> Layer · 100-m-Zellen</label>
+      <label><input type="checkbox" id="chk-pop-labels" checked> Einwohnerzahl anzeigen</label>
+      <label><input type="checkbox" id="chk-pop-3d"> 3D-Säulen (Einwohner × 0,1 m)</label>
+    </fieldset>
+    <fieldset>
+      <legend>Gebäude</legend>
+      <label><input type="checkbox" class="layer-toggle" id="chk-buildings" checked> Layer · OpenStreetMap</label>
+      <label><input type="checkbox" id="chk-building-labels" checked> Name oder Hausnummer anzeigen</label>
+      <label><input type="checkbox" id="chk-buildings-3d"> 3D-Gebäude (Etagen × 3 m)</label>
+    </fieldset>
+  </div>
+  <div id="file-warning" class="panel" hidden>
+    PMTiles benötigen HTTP-Range-Requests. Öffnet die Seite mit VS Code <b>Go Live</b> statt direkt als <code>file://</code>.
   </div>
   <div id="legend" class="panel"></div>
 
@@ -50,6 +67,7 @@
 
     // Basis-URL dieser Seite, damit es lokal und auf GitHub Pages funktioniert
     const BASE = new URL(".", window.location.href).href;
+    document.getElementById("file-warning").hidden = window.location.protocol !== "file:";
 
     // 2. Zwei Ebenen, jeweils als PMTiles-Datei und als XYZ-Ordner verfügbar
     const EBENEN = {
@@ -60,7 +78,7 @@
     const popVorhanden = (await fetch(BASE + "tiles/population.pmtiles", { method: "HEAD" }).catch(() => null))?.ok;
     if (!popVorhanden) {
       delete EBENEN.population;
-      document.getElementById("chk-population").parentElement.remove();
+      document.getElementById("population-controls").remove();
     }
     const attribution = "Zensus 2022 © Statistische Ämter des Bundes und der Länder · © OpenStreetMap-Mitwirkende";
 
@@ -77,6 +95,7 @@
       sources[name + "-pmtiles"] = {
         type: "vector",
         url: "pmtiles://" + BASE + "tiles/" + name + ".pmtiles",
+        ...(name === "population" ? { promoteId: "grid_id" } : {}),
         attribution
       };
       sources[name + "-xyz"] = {
@@ -84,6 +103,7 @@
         tiles: [BASE + "tiles_xyz/" + name + "/{z}/{x}/{y}.pbf"],
         minzoom: z.minzoom,
         maxzoom: z.maxzoom,
+        ...(name === "population" ? { promoteId: "grid_id" } : {}),
         attribution
       };
     }
@@ -129,10 +149,24 @@
       });
     }
 
-    // 3D: eigener Layer auf denselben Tiles; Höhe aus building:levels (ohne Angabe: 1 Etage)
+    // Einwohner-Säulenhöhe: 0,1 m pro Einwohner der 100-m-Zelle.
+    if (popVorhanden) for (const q of ["pmtiles", "xyz"]) {
+      layers.push({
+        id: "population-extrusion-" + q, type: "fill-extrusion", source: "population-" + q,
+        "source-layer": "population",
+        layout: { visibility: "none" },
+        paint: {
+          "fill-extrusion-color": popFarbe,
+          "fill-extrusion-height": ["*", 0.1, ["get", "population"]],
+          "fill-extrusion-opacity": 0.85
+        }
+      });
+    }
+
+    // 3D-Gebäudehöhe aus building:levels (ohne Angabe: 1 Etage)
     for (const q of ["pmtiles", "xyz"]) {
       layers.push({
-        id: "extrusion-" + q, type: "fill-extrusion", source: "buildings-" + q,
+        id: "buildings-extrusion-" + q, type: "fill-extrusion", source: "buildings-" + q,
         "source-layer": "buildings",
         layout: { visibility: "none" },
         paint: {
@@ -140,6 +174,22 @@
           "fill-extrusion-height": ["*", 3, ["max", 1, ["to-number", ["get", "building:levels"], 1]]],
           "fill-extrusion-opacity": 0.9
         }
+      });
+    }
+
+    // Einwohnerzahl je Zelle als eigener, unabhängig schaltbarer Beschriftungs-Layer
+    if (popVorhanden) for (const q of ["pmtiles", "xyz"]) {
+      layers.push({
+        id: "population-labels-" + q, type: "symbol", source: "population-" + q,
+        "source-layer": "population",
+        minzoom: 13,
+        layout: {
+          visibility: q === "pmtiles" ? "visible" : "none",
+          "text-field": ["to-string", ["get", "population"]],
+          "text-size": 11,
+          "text-allow-overlap": true
+        },
+        paint: { "text-color": "#333", "text-halo-color": "#fff", "text-halo-width": 1.5 }
       });
     }
 
@@ -174,39 +224,77 @@
     map.addControl(new maplibregl.NavigationControl());
     map.addControl(new maplibregl.ScaleControl());
 
-    // 5. Umschalten: Quelle (PMTiles/XYZ) und Ebenen (an/aus)
-    function aktualisieren() {
-      const q = document.querySelector("input[name=quelle]:checked").value;
-      for (const name of Object.keys(EBENEN)) {
-        const an = document.getElementById("chk-" + name).checked;
-        for (const v of ["pmtiles", "xyz"]) {
-          map.setLayoutProperty(name + "-" + v, "visibility", an && v === q ? "visible" : "none");
+    let mapReady = false;
+
+    // 5. Ebenen einzeln ein-/ausschalten; 3D-Ansichten schließen sich gegenseitig aus.
+    function aktualisieren(event) {
+      const target = event?.target;
+      const popLayerControl = document.getElementById("chk-population");
+      const popLabelsControl = document.getElementById("chk-pop-labels");
+      const pop3DControl = document.getElementById("chk-pop-3d");
+      const buildingsLayerControl = document.getElementById("chk-buildings");
+      const buildingsLabelsControl = document.getElementById("chk-building-labels");
+      const buildings3DControl = document.getElementById("chk-buildings-3d");
+      if (target === pop3DControl && target.checked) buildings3DControl.checked = false;
+      if (target === buildings3DControl && target.checked && pop3DControl) pop3DControl.checked = false;
+      if (target === popLayerControl && !target.checked) {
+        popLabelsControl.checked = false;
+        pop3DControl.checked = false;
+      }
+      if (target === buildingsLayerControl && !target.checked) {
+        buildingsLabelsControl.checked = false;
+        buildings3DControl.checked = false;
+      }
+      if (popLayerControl) {
+        popLabelsControl.disabled = !popLayerControl.checked;
+        pop3DControl.disabled = !popLayerControl.checked;
+      }
+      buildingsLabelsControl.disabled = !buildingsLayerControl.checked;
+      buildings3DControl.disabled = !buildingsLayerControl.checked;
+      if (!mapReady) return;
+
+      const q = document.querySelector('input[name="quelle"]:checked').value;
+      const popAn = Boolean(popVorhanden && popLayerControl.checked);
+      const gebAn = buildingsLayerControl.checked;
+      const pop3D = popAn && pop3DControl.checked;
+      const geb3D = gebAn && buildings3DControl.checked;
+      const any3D = pop3D || geb3D;
+
+      for (const v of ["pmtiles", "xyz"]) {
+        if (popVorhanden) {
+          map.setLayoutProperty("population-" + v, "visibility",
+            popAn && !pop3D && v === q ? "visible" : "none");
+          map.setLayoutProperty("population-extrusion-" + v, "visibility",
+            pop3D && v === q ? "visible" : "none");
+          map.setLayoutProperty("population-labels-" + v, "visibility",
+            popAn && popLabelsControl.checked && (!any3D || pop3D) && v === q ? "visible" : "none");
         }
+        map.setLayoutProperty("buildings-" + v, "visibility",
+          gebAn && !geb3D && v === q ? "visible" : "none");
+        map.setLayoutProperty("buildings-extrusion-" + v, "visibility",
+          geb3D && v === q ? "visible" : "none");
+        map.setLayoutProperty("labels-" + v, "visibility",
+          gebAn && buildingsLabelsControl.checked && (!any3D || geb3D) && v === q ? "visible" : "none");
       }
-      const d3 = document.getElementById("chk-3d").checked;
-      const gebAn = document.getElementById("chk-buildings").checked;
-      for (const v of ["pmtiles", "xyz"]) {
-        map.setLayoutProperty("buildings-" + v, "visibility", gebAn && !d3 && v === q ? "visible" : "none");
-        map.setLayoutProperty("extrusion-" + v, "visibility", gebAn && d3 && v === q ? "visible" : "none");
-      }
-      const labelAn = document.getElementById("chk-labels").checked && document.getElementById("chk-buildings").checked;
-      for (const v of ["pmtiles", "xyz"]) {
-        map.setLayoutProperty("labels-" + v, "visibility", labelAn && v === q ? "visible" : "none");
-      }
+      map.easeTo({ pitch: any3D ? 60 : 0, bearing: any3D ? -20 : 0, duration: 800 });
     }
     document.querySelectorAll("#controls input").forEach(el => el.addEventListener("change", aktualisieren));
-    document.getElementById("chk-3d").addEventListener("change", e => {
-      map.easeTo({ pitch: e.target.checked ? 60 : 0, bearing: e.target.checked ? -20 : 0, duration: 800 });
+    map.once("load", () => {
+      mapReady = true;
+      aktualisieren();
     });
+    aktualisieren();
 
     // 6. Hover-Popup: zeigt die Attribute des obersten Objekts
     function popupHtml(layerName, p) {
       if (layerName === "population") {
-        return `<b>Einwohner:</b> ${p.population}<br><b>pro km²:</b> ${p.population_per_km2}`;
+        const höhe = Number(p.population) * 0.1;
+        return `<b>Einwohner:</b> ${p.population}<br><b>pro km²:</b> ${p.population_per_km2}<br><b>3D-Höhe:</b> ${höhe.toFixed(1)} m`;
       }
       // Alle vorhandenen OSM-Tags als Tabelle anzeigen
       const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-      const zeilen = Object.entries(p)
+      const etagen = Math.max(1, Number(p["building:levels"]) || 1);
+      const zeilen = [["geschätzte Höhe", `${etagen * 3} m`], ...Object.entries(p)]
         .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
       return `<table class="tags">${zeilen}</table>`;
     }
