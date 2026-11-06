@@ -1,0 +1,6 @@
+.DS_Store
+
+# Bevölkerungsebene bleibt lokal: online (GitHub Pages) erscheint nur "Gebäude"
+tiles/population.pmtiles
+tiles_xyz/population/
+tiles_xyz/buildings/
