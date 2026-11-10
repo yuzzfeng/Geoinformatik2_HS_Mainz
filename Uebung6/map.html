@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector Tiles · Übung 6</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.5 system-ui, sans-serif; color: #193344; }
+    #map { position: absolute; inset: 0; background: #eaf0f3; }
+    form { position: absolute; top: 16px; left: 16px; width: min(420px, calc(100% - 76px)); padding: 20px; border-radius: 12px; background: #fffffff2; box-shadow: 0 4px 24px #16304725; max-height: calc(100% - 50px); overflow: auto; }
+    h1 { font-size: 21px; margin: 0 0 14px; }
+    label { display: block; font-weight: 600; margin: 12px 0 5px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #aebfc9; border-radius: 6px; font: inherit; }
+    button { margin-top: 16px; padding: 10px 20px; border: 0; border-radius: 6px; background: #126c90; color: white; font: inherit; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    p { font-size: 12px; margin: 12px 0 0; }
+    #status { overflow-wrap: anywhere; }
+    #status[data-error="true"] { color: #a32323; }
+    .maplibregl-popup-content pre { max-height: 260px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <div id="map" aria-label="Karte mit Vektorkacheln"></div>
+  <form id="controls">
+    <h1>Vektorkacheln anzeigen</h1>
+    <label for="example">Beispiele aus dem Kurs</label>
+    <select id="example">
+      <option value="">Eigene URL eingeben</option>
+      <option value="nele">Nele1104 · POI</option>
+      <option value="survey">survey-007-JD · POI Mainz</option>
+      <option value="wang">wangzk101002-source · POI</option>
+      <option value="natur">Naturbursche05 · Bevölkerung</option>
+    </select>
+    <p id="example-info" hidden><a id="example-repo" target="_blank" rel="noopener noreferrer">Beispiel auf GitHub ansehen</a></p>
+    <label for="tiles">XYZ-Kachel-URL</label>
+    <input id="tiles" type="text" required spellcheck="false" placeholder="https://example.com/tiles/{z}/{x}/{y}.pbf">
+    <label for="style">Style-URL (optional)</label>
+    <input id="style" type="text" spellcheck="false" placeholder="https://example.com/style.json">
+    <label><input id="osm" type="checkbox" checked style="width:auto"> OSM-Hintergrundkarte</label>
+    <div id="layer-controls"></div>
+    <button id="load" type="submit">Karte laden</button>
+    <p>Ohne Style werden die Layer automatisch erkannt und mit Standardfarben dargestellt. Mit Style verwenden alle Vektorquellen die eingegebene XYZ-URL. Die Kacheln müssen die im Style verwendeten source-layer und Attribute enthalten. Die Karte startet in Mainz oder am im Style angegebenen Mittelpunkt.</p>
+    <p id="status" role="status" aria-live="polite">Ein Kursbeispiel auswählen oder eine eigene XYZ-URL eingeben und Karte laden. Die Style-URL ist optional. Relative Pfade zu dieser Seite sind ebenfalls möglich.</p>
+  </form>
+  <script>
+    const form = document.getElementById('controls');
+    const status = document.getElementById('status');
+    const button = document.getElementById('load');
+    const examples = {
+      wang: {
+        url: 'https://wangzk101002-source.github.io/vector-tiles-mainz/tiles_xyz/poi/{z}/{x}/{y}.pbf',
+        repo: 'https://github.com/wangzk101002-source/vector-tiles-mainz/tree/main/tiles_xyz/poi',
+        minzoom: 10, maxzoom: 14, bounds: [8.237125, 49.447838, 8.239479, 49.453282]
+      },
+      nele: {
+        url: 'https://nele1104.github.io/Geoinfo2/Uebung6/tiles_xyz/poi/{z}/{x}/{y}.pbf',
+        repo: 'https://github.com/Nele1104/Geoinfo2/tree/main/Uebung6/tiles_xyz/poi',
+        minzoom: 10, maxzoom: 14, center: [8.46, 50.06], zoom: 10
+      },
+      survey: {
+        url: 'https://survey-007-JD.github.io/vector-tiles-mainz/tiles_xyz/poi/{z}/{x}/{y}.pbf',
+        repo: 'https://github.com/survey-007-JD/vector-tiles-mainz/tree/main/tiles_xyz/poi',
+        minzoom: 10, maxzoom: 14, bounds: [8.152635, 49.958274, 8.293534, 50.022326]
+      },
+      natur: {
+        url: 'https://Naturbursche05.github.io/vector-tiles-mainz/tiles_xyz/population/{z}/{x}/{y}.pbf',
+        repo: 'https://github.com/Naturbursche05/vector-tiles-mainz/tree/main/tiles_xyz/population',
+        minzoom: 8, maxzoom: 15, bounds: [8.144397, 49.908892, 8.329178, 50.030173]
+      }
+    };
+    const exampleSelect = document.getElementById('example');
+    const tilesInput = document.getElementById('tiles');
+    exampleSelect.addEventListener('change', () => {
+      const example = examples[exampleSelect.value];
+      document.getElementById('example-info').hidden = !example;
+      if (!example) { tilesInput.focus(); return; }
+      tilesInput.value = example.url;
+      document.getElementById('style').value = '';
+      document.getElementById('example-repo').href = example.repo;
+      if (!button.disabled) form.requestSubmit();
+    });
+    tilesInput.addEventListener('input', () => {
+      exampleSelect.value = '';
+      document.getElementById('example-info').hidden = true;
+    });
+    let map;
+    let popup;
+    let generation = 0;
+    let autoMode = false;
+    const discovered = new Set();
+    const colors = ['#247ba0', '#e07a35', '#7659a6', '#31956c', '#cc527a'];
+    const osmSource = { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende' };
+    function baseStyle() {
+      return { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#eaf0f3' } }] };
+    }
+    function addOSM(style) {
+      let id = '__viewer_osm';
+      while (style.sources[id] || style.layers.some(layer => layer.id === id)) id += '_';
+      style.sources[id] = osmSource;
+      const index = style.layers.findIndex(layer => layer.type !== 'background');
+      style.layers.splice(index < 0 ? style.layers.length : index, 0, { id, type: 'raster', source: id, layout: { visibility: document.getElementById('osm').checked ? 'visible' : 'none' } });
+      return id;
+    }
+    let osmLayer;
+    // Nur Layernamen aus der MVT-Protobuf-Struktur lesen; MapLibre dekodiert die Geometrie.
+    function tileLayerNames(buffer) {
+      const bytes = new Uint8Array(buffer), names = [];
+      let pos = 0;
+      function uint(end) {
+        let value = 0, factor = 1;
+        for (let i = 0; i < 10 && pos < end; i++) {
+          const byte = bytes[pos++]; value += (byte & 127) * factor;
+          if (!(byte & 128)) return value;
+          factor *= 128;
+        }
+        throw new Error('Ungültige MVT-Daten');
+      }
+      function fields(end, layer) {
+        while (pos < end) {
+          const tag = uint(end), field = Math.floor(tag / 8), wire = tag & 7;
+          if (wire === 2) {
+            const size = uint(end), stop = pos + size;
+            if (stop > end) throw new Error('Unvollständige MVT-Daten');
+            if (!layer && field === 3) fields(stop, true);
+            else if (layer && field === 1) names.push(new TextDecoder().decode(bytes.subarray(pos, stop)));
+            pos = stop;
+          } else if (wire === 0) uint(end);
+          else if (wire === 1) pos += 8;
+          else if (wire === 5) pos += 4;
+          else throw new Error('Die URL liefert keine gültige MVT/PBF-Kachel');
+          if (pos > end) throw new Error('Unvollständige MVT-Daten');
+        }
+      }
+      fields(bytes.length, false);
+      return names;
+    }
+    function showAutoLayers(names, requestGeneration) {
+      if (!autoMode || generation !== requestGeneration || !map.getSource('__auto')) return;
+      for (const name of names) {
+        if (discovered.has(name)) continue;
+        const index = discovered.size, color = colors[index % colors.length];
+        discovered.add(name);
+        const ids = [];
+        for (const [type, geometry, paint] of [
+          ['fill', 'Polygon', { 'fill-color': color, 'fill-opacity': 0.5 }],
+          ['line', 'LineString', { 'line-color': color, 'line-width': 2 }],
+          ['circle', 'Point', { 'circle-color': color, 'circle-radius': 5, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 }]
+        ]) {
+          const id = '__auto_' + index + '_' + type;
+          ids.push(id);
+          map.addLayer({ id, type, source: '__auto', 'source-layer': name, filter: ['==', ['geometry-type'], geometry], paint });
+        }
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.checked = true; checkbox.style.width = 'auto';
+        checkbox.addEventListener('change', () => ids.forEach(id => map.setLayoutProperty(id, 'visibility', checkbox.checked ? 'visible' : 'none')));
+        label.append(checkbox, document.createTextNode(' ' + name));
+        document.getElementById('layer-controls').append(label);
+      }
+      if (discovered.size) report(discovered.size + ' Vektorlayer erkannt. Auf ein Objekt klicken, um seine Attribute anzuzeigen.');
+    }
+    function report(message, error = false) {
+      status.textContent = message;
+      status.dataset.error = String(error);
+    }
+    // Platzhalter beim Auflösen relativer URLs beibehalten.
+    function absolute(value, base) {
+      return new URL(value, base).href.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
+    }
+    function prepareStyle(style, styleURL, tilesURL) {
+      if (style.version !== 8 || !style.sources || !Array.isArray(style.layers)) {
+        throw new Error('Ein MapLibre-/Mapbox-Style als JSON (version: 8) ist erforderlich.');
+      }
+      let count = 0;
+      for (const source of Object.values(style.sources)) {
+        if (source.type === 'vector') {
+          // Zoomgrenzen und Darstellungsoptionen beibehalten, die Datenadresse ersetzen.
+          delete source.url;
+          delete source.bounds;
+          source.tiles = [tilesURL];
+          source.scheme = 'xyz';
+          count++;
+        } else {
+          if (source.url) source.url = absolute(source.url, styleURL);
+          if (source.tiles) source.tiles = source.tiles.map(url => absolute(url, styleURL));
+          if (typeof source.data === 'string') source.data = absolute(source.data, styleURL);
+        }
+      }
+      if (!count) throw new Error('Der Style enthält keine Datenquelle vom Typ vector.');
+      if (style.glyphs) style.glyphs = absolute(style.glyphs, styleURL);
+      if (typeof style.sprite === 'string') style.sprite = absolute(style.sprite, styleURL);
+      else if (Array.isArray(style.sprite)) {
+        style.sprite = style.sprite.map(sprite => ({ ...sprite, url: absolute(sprite.url, styleURL) }));
+      }
+      return style;
+    }
+    if (typeof maplibregl === 'undefined') {
+      button.disabled = true;
+      report('MapLibre konnte nicht geladen werden. Bitte die Netzwerkverbindung prüfen und die Seite neu laden.', true);
+    } else {
+      maplibregl.addProtocol('autovector', async (params, controller) => {
+        const match = params.url.match(/^autovector:\/\/(\d+)\/(.*)$/);
+        const requestGeneration = Number(match[1]);
+        let response;
+        try {
+          response = await fetch(match[2], { signal: controller.signal });
+        } catch (error) {
+          if (controller.signal.aborted) throw error;
+          throw new Error('Vektorkachel konnte nicht abgerufen werden: ' + match[2] + ' (' + error.message + ')');
+        }
+        if (response.status === 404 || response.status === 204) return { data: new ArrayBuffer(0) };
+        if (!response.ok) throw new Error('Vektorkachel: HTTP ' + response.status + ': ' + match[2]);
+        let buffer = await response.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        if (bytes[0] === 31 && bytes[1] === 139) {
+          buffer = await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+        }
+        const names = tileLayerNames(buffer);
+        setTimeout(() => showAutoLayers(names, requestGeneration), 0);
+        return { data: buffer };
+      });
+      const initialStyle = baseStyle();
+      osmLayer = addOSM(initialStyle);
+      map = new maplibregl.Map({
+        container: 'map', center: [8.272, 50.003], zoom: 14,
+        style: initialStyle,
+        locale: {
+          'NavigationControl.ZoomIn': 'Vergrößern',
+          'NavigationControl.ZoomOut': 'Verkleinern',
+          'NavigationControl.ResetBearing': 'Nach Norden ausrichten',
+          'AttributionControl.ToggleAttribution': 'Quellenangaben ein-/ausblenden',
+          'Map.Title': 'Karte',
+          'Popup.Close': 'Schließen'
+        }
+      });
+      map.addControl(new maplibregl.NavigationControl());
+      map.addControl(new maplibregl.ScaleControl());
+      map.on('error', event => {
+        if (event.error?.name === 'AbortError') return;
+        const message = event.error?.message || 'Unbekannter Fehler';
+        if (event.sourceId === osmLayer) {
+          report('OSM-Hintergrund konnte nicht geladen werden: ' + message + '. Den OSM-Hintergrund deaktivieren und erneut versuchen. Vektorlayer lassen sich unabhängig davon anzeigen.', true);
+        } else {
+          const source = event.sourceId ? ' (Datenquelle: ' + event.sourceId + ')' : '';
+          report('Kartenressource konnte nicht geladen werden' + source + ': ' + message + '. „Failed to fetch“ bedeutet, dass der Browser die Ressource nicht abrufen konnte. Bitte die Netzwerkverbindung prüfen oder die fehlgeschlagene Anfrage im Bereich Netzwerk (Network) der Entwicklertools ansehen.', true);
+        }
+      });
+      map.on('click', event => {
+        const feature = map.queryRenderedFeatures(event.point)[0];
+        if (popup) popup.remove();
+        if (!feature) return;
+        const content = document.createElement('pre');
+        content.textContent = JSON.stringify({ layer: feature.sourceLayer || feature.layer.id, ...feature.properties }, null, 2);
+        popup = new maplibregl.Popup({ maxWidth: '340px' }).setLngLat(event.lngLat).setDOMContent(content).addTo(map);
+      });
+    }
+    document.getElementById('osm').addEventListener('change', event => {
+      if (map && map.getLayer(osmLayer)) map.setLayoutProperty(osmLayer, 'visibility', event.target.checked ? 'visible' : 'none');
+    });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      button.disabled = true;
+      exampleSelect.disabled = true;
+      report('Wird geladen …');
+      try {
+        const template = document.getElementById('tiles').value.trim();
+        if (!['{z}', '{x}', '{y}'].every(token => template.includes(token))) {
+          throw new Error('Die XYZ-URL muss die Platzhalter {z}, {x} und {y} enthalten.');
+        }
+        const example = Object.values(examples).find(item => item.url === template);
+        const tilesURL = absolute(template, location.href);
+        const styleInput = document.getElementById('style').value.trim();
+        const styleURL = styleInput ? absolute(styleInput, location.href) : null;
+        if (![tilesURL, styleURL].filter(Boolean).every(url => /^https?:\/\//i.test(url))) {
+          throw new Error('Bitte HTTP(S)-URLs verwenden. Lokale Dateien über VS Code Go Live oder einen lokalen HTTP-Server öffnen.');
+        }
+        let style;
+        if (styleURL) {
+          const response = await fetch(styleURL, { signal: AbortSignal.timeout(20000) });
+          if (!response.ok) throw new Error('Style HTTP ' + response.status);
+          style = prepareStyle(await response.json(), response.url || styleURL, tilesURL);
+        } else {
+          style = baseStyle();
+          style.sources.__auto = { type: 'vector', tiles: ['autovector://' + (generation + 1) + '/' + tilesURL], minzoom: example?.minzoom ?? 0, maxzoom: example?.maxzoom ?? 22 };
+          // Ein aktiver Testlayer fordert Kacheln an, bevor ihre Layernamen bekannt sind.
+          style.layers.push({ id: '__probe', type: 'circle', source: '__auto', 'source-layer': '__probe', paint: { 'circle-opacity': 0 } });
+        }
+        generation++;
+        autoMode = !styleURL;
+        discovered.clear();
+        document.getElementById('layer-controls').replaceChildren();
+        osmLayer = addOSM(style);
+        if (popup) popup.remove();
+        report(styleURL ? 'Kacheln werden geladen. Falls die Karte leer bleibt, bitte Position, Zoomstufe und source-layer prüfen.' : 'Layer im aktuellen Kartenausschnitt werden automatisch erkannt. Falls nichts angezeigt wird, zum Datengebiet navigieren und eine verfügbare Zoomstufe wählen (bei eigenen URLs ohne Style: Mainz, z14).');
+        map.setStyle(style, { diff: false });
+        map.jumpTo({ center: style.center || example?.center || [8.272, 50.003], zoom: style.zoom ?? example?.zoom ?? 14, bearing: style.bearing ?? 0, pitch: style.pitch ?? 0 });
+        if (!styleURL && example?.bounds) {
+          const [west, south, east, north] = example.bounds;
+          const panel = form.getBoundingClientRect();
+          const padding = map.getContainer().clientWidth > 700
+            ? { left: panel.right + 24, right: 60, top: 50, bottom: 50 }
+            : 45;
+          map.fitBounds([[west, south], [east, north]], { padding, maxZoom: example.maxzoom, duration: 0 });
+        }
+      } catch (error) {
+        report(error.message + '. Bei „Failed to fetch“ bitte die Style-URL, die Netzwerkverbindung und die CORS-Einstellungen des Servers prüfen.', true);
+      } finally {
+        exampleSelect.disabled = false;
+        button.disabled = false;
+      }
+    });
+    if (location.protocol === 'file:') report('Diese Seite über VS Code Go Live oder einen lokalen HTTP-Server öffnen, damit Kacheln und Styles geladen werden können.');
+  </script>
+</body>
+</html>
