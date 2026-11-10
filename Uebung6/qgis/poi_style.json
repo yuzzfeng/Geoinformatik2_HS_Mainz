@@ -1,0 +1,33 @@
+{
+  "version": 8,
+  "name": "POI · Übung 6",
+  "center": [
+    8.272,
+    50.003
+  ],
+  "zoom": 12,
+  "sources": {
+    "poi": {
+      "type": "vector",
+      "tiles": [
+        "../tiles_xyz/poi/{z}/{x}/{y}.pbf"
+      ],
+      "minzoom": 10,
+      "maxzoom": 14
+    }
+  },
+  "layers": [
+    {
+      "id": "poi-punkte",
+      "type": "circle",
+      "source": "poi",
+      "source-layer": "poi",
+      "paint": {
+        "circle-radius": 6,
+        "circle-color": "#e76f51",
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 1.5
+      }
+    }
+  ]
+}

@@ -53,6 +53,8 @@ Lest kurz nach (oder besprecht in der Übung): Was ist der Unterschied zwischen 
 docker build -t tippecanoe-uebung6 Uebung6/tools
 ```
 
+Die folgenden Windows-Befehle sind für **PowerShell** (auch im VS-Code-Terminal). Führt sie ebenfalls im Hauptverzeichnis des Repositorys aus. Das Backtick-Zeichen (`` ` ``) setzt einen Befehl in der nächsten Zeile fort; dahinter dürfen keine Leerzeichen stehen.
+
 Gebäude als PMTiles erzeugen:
 
 ```bash
@@ -64,6 +66,17 @@ docker run --rm -v "$PWD/Uebung6":/work -w /work tippecanoe-uebung6 \
   data/buildings.geojson
 ```
 
+**Windows (PowerShell):**
+
+```powershell
+New-Item -ItemType Directory -Force -Path "Uebung6/tiles" | Out-Null
+docker run --rm -v "${PWD}/Uebung6:/work" -w /work tippecanoe-uebung6 `
+  tippecanoe `
+  -o tiles/buildings.pmtiles -l buildings `
+  -Z13 -z16 --no-feature-limit --no-tile-size-limit --force `
+  data/buildings.geojson
+```
+
 Dasselbe geht für XYZ-Kacheln (unkomprimiert, weil GitHub Pages `.pbf` nicht gzip-komprimiert ausliefert):
 
 ```bash
@@ -72,6 +85,17 @@ docker run --rm -v "$PWD/Uebung6":/work -w /work tippecanoe-uebung6 \
   tippecanoe \
   -e tiles_xyz/buildings -l buildings \
   -Z13 -z16 --no-feature-limit --no-tile-size-limit \
+  --no-tile-compression --force data/buildings.geojson
+```
+
+**Windows (PowerShell):**
+
+```powershell
+New-Item -ItemType Directory -Force -Path "Uebung6/tiles_xyz" | Out-Null
+docker run --rm -v "${PWD}/Uebung6:/work" -w /work tippecanoe-uebung6 `
+  tippecanoe `
+  -e tiles_xyz/buildings -l buildings `
+  -Z13 -z16 --no-feature-limit --no-tile-size-limit `
   --no-tile-compression --force data/buildings.geojson
 ```
 
@@ -88,6 +112,22 @@ docker run --rm -v "$PWD/Uebung6":/work -w /work tippecanoe-uebung6 \
   tippecanoe \
   -e tiles_xyz/population -l population \
   -Z8 -z15 --no-tile-size-limit --coalesce-densest-as-needed \
+  --no-tile-compression --force data/population.geojson
+```
+
+**Windows (PowerShell):**
+
+```powershell
+New-Item -ItemType Directory -Force -Path "Uebung6/tiles", "Uebung6/tiles_xyz" | Out-Null
+docker run --rm -v "${PWD}/Uebung6:/work" -w /work tippecanoe-uebung6 `
+  tippecanoe `
+  -o tiles/population.pmtiles -l population `
+  -Z8 -z15 --no-tile-size-limit --coalesce-densest-as-needed --force `
+  data/population.geojson
+docker run --rm -v "${PWD}/Uebung6:/work" -w /work tippecanoe-uebung6 `
+  tippecanoe `
+  -e tiles_xyz/population -l population `
+  -Z8 -z15 --no-tile-size-limit --coalesce-densest-as-needed `
   --no-tile-compression --force data/population.geojson
 ```
 
@@ -126,16 +166,20 @@ Die Seite findet eure Kacheln relativ zum eigenen Pfad, sie funktioniert also lo
 1. **Layer → Layer hinzufügen → Vector-Tiles-Layer → Neu → Neue generische Verbindung**.
 2. Typ XYZ, Min. Zoom 13, Max. Zoom 16, URL:
 
-   | Version | URL |
-   |---|---|
-   | **Online** (GitHub Pages) | `https://<user>.github.io/<repo>/tiles_xyz/buildings/{z}/{x}/{y}.pbf` |
-   | **Lokal** (VS Code Live Server) | `http://127.0.0.1:5500/tiles_xyz/buildings/{z}/{x}/{y}.pbf` |
+   | Version | URL (XYZ-Kacheln) | Style-URL (JSON) |
+   |---|---|---|
+   | **Lokal** (VS Code Live Server) | `http://127.0.0.1:5500/Uebung6/tiles_xyz/buildings/{z}/{x}/{y}.pbf` | `http://127.0.0.1:5500/Uebung6/qgis/test_simple.json` |
+   | **Online** (GitHub Pages) | `https://<user>.github.io/<repo>/Uebung6/tiles_xyz/buildings/{z}/{x}/{y}.pbf` | `https://<user>.github.io/<repo>/Uebung6/qgis/test_simple.json` |
+
+   Tragt die JSON-Adresse im selben QGIS-Verbindungsdialog in das Feld **Style-URL** ein. Der Stil wird beim Hinzufügen des Layers angewendet. Siehe [QGIS-Dokumentation zu Vektorkacheln](https://docs.qgis.org/3.44/en/docs/user_manual/working_with_vector_tiles/vector_tiles.html).
+
+   Die Beispiele setzen voraus, dass `Uebung6` im Repository-Hauptverzeichnis liegt. Öffnet ihr direkt `Uebung6` mit Live Server oder liegen `tiles_xyz` und `qgis` direkt im veröffentlichten Repository, entfällt `/Uebung6` in **beiden** URLs. Passt den lokalen Port `5500` bei Bedarf an. Ersetzt `<user>` und `<repo>` durch eure Angaben und veröffentlicht auch `qgis/test_simple.json`. Verwendet eine GitHub-Pages-Adresse, keine GitHub-Dateiansicht mit `/blob/` oder `/tree/`.
 
    Die Bevölkerungsebene (`tiles_xyz/population/{z}/{x}/{y}.pbf`, Zoom 8–15) gibt es nur lokal.
 
    Für die lokale Vorschau der Webkarte öffnet `index.html` in VS Code mit **Live Server** (Rechtsklick → **Open with Live Server**). Ein zusätzlicher Webserver-Container ist nicht nötig.
 3. Layer hinzufügen und auf Zoom 13 oder größer zoomen.
-4. Stil laden: Layer-Eigenschaften → **Symbolisierung → Stil → Aus Datei laden** → `qgis/test_simple.json`. Alternativ den Stil manuell bauen (Farbe nach `building:levels`).
+4. Falls ihr keine **Style-URL** eingetragen habt: Layer-Eigenschaften → **Symbolisierung → Stil → Aus Datei laden** → `qgis/test_simple.json` (Dateityp **MapBox GL JSON**). Alternativ den Stil manuell bauen (Farbe nach `building:levels`).
 
 Hinweis: Feldnamen mit Doppelpunkt schreibt ihr in QGIS in Anführungszeichen, z. B. `"building:levels"`.
 
@@ -149,6 +193,16 @@ mkdir -p Uebung6/tiles_xyz/poi
 docker run --rm -v "$PWD/Uebung6":/work -w /work tippecanoe-uebung6 \
   tippecanoe -e tiles_xyz/poi -l poi \
   -Z10 -z14 --drop-densest-as-needed \
+  --no-tile-compression --force data/poi.geojson
+```
+
+**Windows (PowerShell):**
+
+```powershell
+New-Item -ItemType Directory -Force -Path "Uebung6/tiles_xyz/poi" | Out-Null
+docker run --rm -v "${PWD}/Uebung6:/work" -w /work tippecanoe-uebung6 `
+  tippecanoe -e tiles_xyz/poi -l poi `
+  -Z10 -z14 --drop-densest-as-needed `
   --no-tile-compression --force data/poi.geojson
 ```
 
