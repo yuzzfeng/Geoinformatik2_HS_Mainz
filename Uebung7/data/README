@@ -1,5 +1,11 @@
 # Daten für Übung 7
 
+Die Daten sind nicht im Repository enthalten. Das Notebook lädt fehlende Dateien
+lokal automatisch in diesen Ordner, in Colab nach `/content/data`. Vorhandene
+Dateien werden nicht überschrieben. Quellen sind das [GDS-Buch](https://github.com/gdsbook/book/tree/master/data/tokyo)
+und [Esri Japan](https://www.arcgis.com/home/item.html?id=83d67d4dca074180ab1e11dd6b399919).
+Esri hat die Einstellung des Grenzdienstes für Dezember 2027 angekündigt.
+
 ```
 data/
 ├── Greater_Tokyo_Area.geojson    # Grenzen der Tokio-Metropolregion
