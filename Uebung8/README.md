@@ -4,7 +4,15 @@ Prof. Dr. Yu Feng
 
 ## Überblick
 
-Diese Übung analysiert räumliche Punktmuster von Flickr-Fotos aus Tokio mithilfe von Ripley-Funktionen. Wir vergleichen das beobachtete Muster mit zwei Referenzmustern: **CSR (Complete Spatial Randomness)** und **Reguläres Muster**.
+Diese Übung analysiert räumliche Punktmuster von Flickr-Fotos aus Tokio mithilfe des Nearest Neighbour Index (NNI) und der Ripley-Funktionen G, F, K und L. Wir vergleichen das beobachtete Muster mit zwei Referenzmustern: **CSR (Complete Spatial Randomness)** und **Reguläres Muster**.
+
+## Notebook öffnen
+
+[![Übung 8 in Colab öffnen](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yfeng-hsm/Geoinformatik2_HS_Mainz/blob/main/Uebung8/Punktmuster2_Student.ipynb)
+
+Alternativ kann das [Studierenden-Notebook](Punktmuster2_Student.ipynb) lokal mit Jupyter geöffnet werden. Ergänzen Sie die markierten Aufgaben im Notebook.
+
+Für die lokale Ausführung laden Sie die Daten wie in [Übung 7](../Uebung7/Punktmuster1_Student.ipynb) beschrieben herunter und bereiten die Umgebung vor. In Colab müssen `pointpats` und die benötigten Daten ebenfalls vorbereitet werden; das Notebook erwartet die Daten unter `../Uebung7/data/tokyo_clean.csv`.
 
 ## Visualisierungen
 
